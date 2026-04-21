@@ -1,6 +1,6 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# dependencies (NEVER PUSH THESE)
 node_modules/
 
 # Expo
@@ -38,4 +38,4 @@ yarn-error.*
 
 # generated native folders
 /ios
-/android
+#/android

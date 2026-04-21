@@ -1,20 +1,15 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+// uncommnet to see homepage view
+// import React from 'react';
+// import ViewHomePage from './Views/ViewHomePage';
+
+// export default function App() {
+//   return <ViewHomePage />;
+// }
+
+
+//uncomment to see To-DO Dashboard View
+import ViewToDoDashboard from './Views/ViewToDoDashboard';
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+  return <ViewToDoDashboard />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
