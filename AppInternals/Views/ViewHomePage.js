@@ -5,6 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  ScrollView,
+  ImageBackground,
 } from 'react-native';
 
 export default function ViewHomePage() {
@@ -49,31 +51,41 @@ export default function ViewHomePage() {
 
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topBar}>
-        <Text style={styles.logoText}>Studify</Text>
-        <TouchableOpacity style={styles.userIcon}>
-          <Text style={styles.userIconText}>👤</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.content}>
-        <Text style={styles.heading}>Home</Text>
-        <TouchableOpacity style={styles.optionButton} onPress={goToModeSelection}>
-          <Text style={styles.optionLabel}>Timer Mode</Text>
-          <Text style={styles.optionValue}>{selectedTimerMode}</Text>
-        </TouchableOpacity>
-        <View style={styles.inputBox}>
-          <Text style={styles.optionLabel}>Duration (minutes)</Text>
-          <TextInput
-            style={styles.input}
-            value={durationInput}
-            onChangeText={setDurationInput}
-            keyboardType="numeric"
-            placeholder="Enter duration"
-            placeholderTextColor="#aa7f8d"
-          />
+    <ImageBackground
+      source={require('../../assets/background.jpg')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <View style={styles.topBar}>
+          <Text style={styles.logoText}>Studify</Text>
+          <TouchableOpacity style={styles.userIcon}>
+            <Text style={styles.userIconText}>👤</Text>
+          </TouchableOpacity>
         </View>
+
+        <ScrollView
+        style = {styles.content}
+        contentContainerStyle = {styles.contentScroll}
+        showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.heading}>Home</Text>
+          <TouchableOpacity style={styles.optionButton} onPress={goToModeSelection}>
+            <Text style={styles.optionLabel}>Timer Mode</Text>
+            <Text style={styles.optionValue}>{selectedTimerMode}</Text>
+          </TouchableOpacity>
+          <View style={styles.inputBox}>
+            <Text style={styles.optionLabel}>Duration (minutes)</Text>
+            <TextInput
+              style={styles.input}
+              value={durationInput}
+              onChangeText={setDurationInput}
+              keyboardType="numeric"
+              placeholder="Enter duration"
+              placeholderTextColor="#aa7f8d"
+            />
+          </View>
+    
 
         {/* Timer Module */}
         <View style={styles.timerCard}>
@@ -107,7 +119,7 @@ export default function ViewHomePage() {
         <View style={styles.statusBox}>
           <Text style={styles.statusText}>{showStatusMessage()}</Text>
         </View>
-      </View>
+      </ScrollView>
 
 
       <View style={styles.navBar}>
@@ -125,15 +137,22 @@ export default function ViewHomePage() {
         </TouchableOpacity>
       </View>
     </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+
+    background: {
+    flex: 1,
+  },
+
   container: {
     flex: 1,
-    backgroundColor: '#ffeef4',
+    backgroundColor: 'transparent', //040607
     justifyContent: 'space-between',
   },
+
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -146,16 +165,18 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#b85c7a',
+    color: '#4928c2',
   },
+  
   userIcon: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#f8cad8',
+    backgroundColor: '#4928c2',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  
   userIconText: {
     fontSize: 20,
   },
@@ -169,12 +190,15 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#9c4f68',
+    color: '#4928c2',
     marginBottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
   },
 
   optionButton: {
-    backgroundColor: '#ffdbe7',
+    backgroundColor: '#5b2a62',
     padding: 15,
     borderRadius: 18,
     marginBottom: 15,
@@ -182,21 +206,23 @@ const styles = StyleSheet.create({
 
   optionLabel: {
     fontSize: 14,
-    color: '#9c4f68',
+    color: '#e3d9fc',
     marginBottom: 5,
   },
 
   optionValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6e3a4b',
+    color: '#e3d9fc',
   },
+
   inputBox: {
-    backgroundColor: '#ffdbe7',
+    backgroundColor: '#5b2a62',
     padding: 15,
     borderRadius: 18,
     marginBottom: 20,
   },
+
   input: {
     backgroundColor: '#fff6f9',
     borderRadius: 12,
@@ -205,11 +231,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6e3a4b',
   },
+
   timerCard: {
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: '#f9cddd',
+    backgroundColor: '#5b2a62',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
@@ -223,11 +250,11 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: 42,
     fontWeight: 'bold',
-    color: '#8a4159',
+    color: '#e3d9fc',
   },
 
   startButton: {
-    backgroundColor: '#e78aa8',
+    backgroundColor: '#5b2a62',
     paddingVertical: 14,
     borderRadius: 18,
     alignItems: 'center',
@@ -235,7 +262,7 @@ const styles = StyleSheet.create({
   },
 
   stopButton: {
-    backgroundColor: '#d96b8d',
+    backgroundColor: '#bf40fa',
     paddingVertical: 14,
     borderRadius: 18,
     alignItems: 'center',
@@ -243,7 +270,7 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: '#fff',
+    color: '#e3d9fc',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -253,50 +280,56 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 15,
   },
+
   infoCard: {
     width: '48%',
-    backgroundColor: '#ffdbe7',
+    backgroundColor: '#4928c2',
     padding: 18,
     borderRadius: 18,
     alignItems: 'center',
   },
+
   infoTitle: {
-    fontSize: 14,
-    color: '#9c4f68',
+    fontSize: 16,
+    color: '#040607',
     marginBottom: 6,
   },
+
   infoValue: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#6e3a4b',
+    color: '#e3d9fc',
   },
+
   statusBox: {
     marginTop: 10,
-    backgroundColor: '#fff6f9',
+    backgroundColor: '#00000',
     padding: 14,
     borderRadius: 14,
   },
 
   statusText: {
     fontSize: 15,
-    color: '#8a4159',
+    color: '#00000',
     textAlign: 'center',
   },
 
   navBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#f8cad8',
+    backgroundColor: '#4928c2',
     paddingVertical: 14,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
+
   navButton: {
     alignItems: 'center',
   },
+
   navText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8a4159',
+    color: '#040607',
   },
 });
