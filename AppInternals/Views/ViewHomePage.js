@@ -88,53 +88,53 @@ export default function ViewHomePage({navigation}) {
           </View>
     
 
-        {/* Timer Module */}
-        <View style={styles.timerCard}>
-          <Text style={styles.timerText}>{showTimer()}</Text>
-        </View>
-
-        {!isTimerRunning ? (
-          <TouchableOpacity style={styles.startButton} onPress={onStartSession}>
-            <Text style={styles.buttonText}>Start</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.stopButton} onPress={onStopSession}>
-            <Text style={styles.buttonText}>Stop</Text>
-          </TouchableOpacity>
-        )}
-
-        <View style={styles.infoRow}>
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>Sessions</Text>
-            <Text style={styles.infoValue}>{showSessionCount()}</Text>
+          {/* Timer Module */}
+          <View style={styles.timerCard}>
+            <Text style={styles.timerText}>{showTimer()}</Text>
           </View>
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>Streak</Text>
-            <Text style={styles.infoValue}>{showStreak()} days</Text>
+
+          {!isTimerRunning ? (
+            <TouchableOpacity style={styles.startButton} onPress={onStartSession}>
+              <Text style={styles.buttonText}>Start</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.stopButton} onPress={onStopSession}>
+              <Text style={styles.buttonText}>Stop</Text>
+            </TouchableOpacity>
+          )}
+
+          <View style={styles.infoRow}>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>Sessions</Text>
+              <Text style={styles.infoValue}>{showSessionCount()}</Text>
+            </View>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>Streak</Text>
+              <Text style={styles.infoValue}>{showStreak()} days</Text>
+            </View>
           </View>
-        </View>
-        <TouchableOpacity style={styles.optionButton} onPress={() => navigation.navigate("AppBlock")}>
-          <Text style={styles.optionLabel}>Blocked Apps</Text>
-          <Text style={styles.optionValue}>{selectedBlockedApps.join(', ')}</Text>
-        </TouchableOpacity>
-        <View style={styles.statusBox}>
-          <Text style={styles.statusText}>{showStatusMessage()}</Text>
-        </View>
-      </ScrollView>
+          <TouchableOpacity style={styles.optionButton} onPress={() => navigation.navigate("AppBlock")}>
+            <Text style={styles.optionLabel}>Blocked Apps</Text>
+            <Text style={styles.optionValue}>{selectedBlockedApps.join(', ')}</Text>
+          </TouchableOpacity>
+          <View style={styles.statusBox}>
+            <Text style={styles.statusText}>{showStatusMessage()}</Text>
+          </View>
+        </ScrollView>
 
-
+      {/*Navigartion bar*/}
       <View style={styles.navBar}>
         <TouchableOpacity style={styles.navButton}>
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("ToDo")}>
           <Text style={styles.navText}>Tasks</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton}>
           <Text style={styles.navText}>Stats</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navText}>Settings</Text>
+          <Text style={styles.navText}>App Blocking</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -144,7 +144,7 @@ export default function ViewHomePage({navigation}) {
 
 const styles = StyleSheet.create({
 
-    background: {
+  background: {
     flex: 1,
   },
 
@@ -316,10 +316,16 @@ const styles = StyleSheet.create({
   },
 
   navBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+
     flexDirection: 'row',
     justifyContent: 'space-around',
     backgroundColor: '#4928c2',
-    paddingVertical: 14,
+    paddingVertical: 20,
+
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },

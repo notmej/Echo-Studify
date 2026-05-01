@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
+  ImageBackground,
 } from 'react-native';
 
-export default function ViewToDoDashboard() {
+export default function ViewToDoDashboard({navigation}) {
   const [taskList, setTaskList] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Easy');
   const [taskInput, setTaskInput] = useState('');
@@ -76,101 +77,130 @@ export default function ViewToDoDashboard() {
   const showStatusMessage = () => statusMessage;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Tasks</Text>
+    <ImageBackground
+      source={require('../../assets/background.jpg')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <Text style={styles.heading}>Tasks</Text>
 
 
-      <View style={styles.inputCard}>
-        <TextInput
-          style={styles.input}
-          placeholder="Task title"
-          value={taskInput}
-          onChangeText={setTaskInput}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Description"
-          value={taskDescription}
-          onChangeText={setTaskDescription}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Due Date"
-          value={dueDate}
-          onChangeText={setDueDate}
-        />
+        <View style={styles.inputCard}>
+          <TextInput
+            style={styles.input}
+            placeholder="Task title"
+            placeholderTextColor="#bf40fa"
+            value={taskInput}
+            onChangeText={setTaskInput}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Description"
+            placeholderTextColor="#bf40fa"
+            value={taskDescription}
+            onChangeText={setTaskDescription}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Due Date"
+            placeholderTextColor="#bf40fa"
+            value={dueDate}
+            onChangeText={setDueDate}
+          />
+
+          <View style={styles.row}>
+            {['Easy', 'Medium', 'Hard'].map(cat => (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.categoryButton,
+                  selectedCategory === cat && styles.selectedCategory,
+                ]}
+                onPress={() => setSelectedCategory(cat)}
+              >
+                <Text style={styles.categoryText}>{cat}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity style={styles.createButton} onPress={onCreateTask}>
+            <Text style={styles.buttonText}>Add Task</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.row}>
-          {['Easy', 'Medium', 'Hard'].map(cat => (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.categoryButton,
-                selectedCategory === cat && styles.selectedCategory,
-              ]}
-              onPress={() => setSelectedCategory(cat)}
-            >
-              <Text style={styles.categoryText}>{cat}</Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity onPress={() => onFilterChange('All')}>
+            <Text style={styles.filterText}>All</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => onFilterChange('Completed')}>
+            <Text style={styles.filterText}>Completed</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => onFilterChange('Pending')}>
+            <Text style={styles.filterText}>Pending</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.createButton} onPress={onCreateTask}>
-          <Text style={styles.buttonText}>Add Task</Text>
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.row}>
-        <TouchableOpacity onPress={() => onFilterChange('All')}>
-          <Text style={styles.filterText}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => onFilterChange('Completed')}>
-          <Text style={styles.filterText}>Completed</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => onFilterChange('Pending')}>
-          <Text style={styles.filterText}>Pending</Text>
-        </TouchableOpacity>
-      </View>
+      
+        <FlatList
+          data={displayTasks()}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.taskCard}>
+              <Text style={[
+                styles.taskTitle,
+                item.completed && styles.completedTask
+              ]}>
+                {item.title}
+              </Text>
 
-    
-      <FlatList
-        data={displayTasks()}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.taskCard}>
-            <Text style={[
-              styles.taskTitle,
-              item.completed && styles.completedTask
-            ]}>
-              {item.title}
-            </Text>
+              <Text style={styles.taskInfo}>{item.category} | {item.dueDate}</Text>
 
-            <Text style={styles.taskInfo}>{item.category} | {item.dueDate}</Text>
+              <View style={styles.row}>
+                <TouchableOpacity onPress={() => onMarkComplete(item.id)}>
+                  <Text style={styles.actionText}>✓</Text>
+                </TouchableOpacity>
 
-            <View style={styles.row}>
-              <TouchableOpacity onPress={() => onMarkComplete(item.id)}>
-                <Text style={styles.actionText}>✓</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => onDeleteTask(item.id)}>
-                <Text style={styles.actionText}>🗑</Text>
-              </TouchableOpacity>
+                <TouchableOpacity onPress={() => onDeleteTask(item.id)}>
+                  <Text style={styles.actionText}>🗑</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        )}
-      />
-
- 
-
-      <Text style={styles.status}>{showStatusMessage()}</Text>
+          )}
+        />
+        <Text style={styles.status}>{showStatusMessage()}</Text>
+  {/* ------------------------------------------------------------------------------ */}
+        <View style={styles.navBar}>
+          <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Home")}>
+            <Text style={styles.navText}>Home</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navButton}>
+            <Text style={styles.navText}>Tasks</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navButton}>
+            <Text style={styles.navText}>Stats</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navButton}>
+            <Text style={styles.navText}>App Blocking</Text>
+          </TouchableOpacity>
+        </View>
     </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+
+  background: {
+    flex: 1,
+  },
+
   container: {
     flex: 1,
-    backgroundColor: '#ffeef4',
-    padding: 20,
+    backgroundColor: 'transparent',
+    paddingTop: 20,
+    paddingLeft: 20,
+    paddingRight: 20,
+    paddingBottom: 0,
   },
 
   heading: {
@@ -178,20 +208,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#9c4f68',
     marginBottom: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
   },
 
   inputCard: {
-    backgroundColor: '#ffdbe7',
+    backgroundColor: '#5b2a62',
     padding: 15,
-    borderRadius: 18,
+    borderRadius: 19,
     marginBottom: 15,
   },
 
   input: {
-    backgroundColor: '#fff6f9',
+    backgroundColor: '#040607',
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
+    color: "#bf40fa",
   },
 
   row: {
@@ -203,32 +237,39 @@ const styles = StyleSheet.create({
   categoryButton: {
     padding: 8,
     borderRadius: 10,
-    backgroundColor: '#f8cad8',
+    backgroundColor: '#4928c2',
   },
 
   selectedCategory: {
-    backgroundColor: '#e78aa8',
+    backgroundColor: '#bf40fa',
   },
 
   categoryText: {
-    color: '#6e3a4b',
+    color: '#040607',
   },
 
   createButton: {
-    backgroundColor: '#e78aa8',
+    backgroundColor: '#bf40fa',
     padding: 12,
     borderRadius: 15,
     alignItems: 'center',
   },
 
   buttonText: {
-    color: '#fff',
+    color: '#40607',
     fontWeight: 'bold',
   },
 
   filterText: {
-    color: '#8a4159',
+    backgroundColor: "#e3d9fc",
+    color: '#4928c2',
     fontWeight: '600',
+
+    borderRadius: 20,
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: 20,
+    paddingRight: 20,
   },
 
   taskCard: {
@@ -261,5 +302,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     color: '#8a4159',
+  },
+
+  navBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#4928c2',
+    paddingVertical: 20,
+
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+
+  navButton: {
+    alignItems: 'center',
+  },
+
+  navText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#040607',
   },
 });

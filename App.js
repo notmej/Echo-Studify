@@ -19,13 +19,31 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator  /* container holding pages / screens*/
        screenOptions={{ /* apply these styles to all screens inside navigator */
+        headerTransparent: true,
         headerStyle: styles.screenOptHeader,
         headerTitleStyle: styles.headerTitle,
        }}
       >
         <Stack.Screen name="Home" component={ViewHomePage} />  
-        <Stack.Screen name="AppBlock" component={ViewAppBlock} /> 
-        <Stack.Screen name="ToDo" component={ViewToDoDashboard} /> 
+        <Stack.Screen 
+          name="AppBlock" 
+          component={ViewAppBlock} 
+            options={{
+              headerTitle: "",
+              headerBackVisible: true,
+            }}
+          /> 
+
+       {/* Todo screen view */}
+        <Stack.Screen 
+          name="ToDo" 
+          component={ViewToDoDashboard} 
+            options={{
+              headerTitle: "",
+              headerBackVisible: false,
+            }}
+        /> 
+
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -35,9 +53,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "transparent",
   }
-
-
-
 });
 // import React from 'react';
 // import ViewHomePage from './AppInternals/Views/ViewHomePage';

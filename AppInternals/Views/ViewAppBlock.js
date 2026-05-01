@@ -107,7 +107,7 @@ export default function ViewAppBlock() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>App Blocking</Text>
+      <Text style={styles.header}>App Blocking</Text>
 
       <Text style={styles.permissionText}>
         Permission Status: {permissionStatus ? "Granted" : "Not Granted"}
@@ -179,10 +179,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
 
-  title: {
+  heading: {
     fontSize: 26,
     fontWeight: "bold",
     marginBottom: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
   },
 
   permissionText: {
