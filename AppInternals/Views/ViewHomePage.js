@@ -9,7 +9,7 @@ import {
   ImageBackground,
 } from 'react-native';
 
-export default function ViewHomePage() {
+export default function ViewHomePage({navigation}) {
   const [selectedTimerMode, setSelectedTimerMode] = useState('Pomodoro');
   const [durationInput, setDurationInput] = useState('25');
   const [displayedTime, setDisplayedTime] = useState('25:00');
@@ -44,6 +44,7 @@ export default function ViewHomePage() {
 
 
   const goToAppBlockSelection = () => {
+    navigartion.navigate("AppBlock");
     setStatusMessage('Navigate to blocked apps selection');
   };
 
@@ -112,7 +113,7 @@ export default function ViewHomePage() {
             <Text style={styles.infoValue}>{showStreak()} days</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.optionButton} onPress={goToAppBlockSelection}>
+        <TouchableOpacity style={styles.optionButton} onPress={() => navigation.navigate("AppBlock")}>
           <Text style={styles.optionLabel}>Blocked Apps</Text>
           <Text style={styles.optionValue}>{selectedBlockedApps.join(', ')}</Text>
         </TouchableOpacity>

@@ -1,15 +1,61 @@
 
-import React from 'react';
-import ViewHomePage from './AppInternals/Views/ViewHomePage';
+import React from "react";
+
+import {
+  StyleSheet,
+} from 'react-native'
+
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+
+import ViewHomePage from "./AppInternals/Views/ViewHomePage";
+import ViewAppBlock from "./AppInternals/Views/ViewAppBlock";
+import ViewToDoDashboard from "./AppInternals/Views/ViewToDoDashboard";
+
+const Stack = createNativeStackNavigator(); // creates navigation object
 
 export default function App() {
-  return <ViewHomePage />;
+  return (
+    <NavigationContainer>
+      <Stack.Navigator  /* container holding pages / screens*/
+       screenOptions={{ /* apply these styles to all screens inside navigator */
+        headerStyle: styles.screenOptHeader,
+        headerTitleStyle: styles.headerTitle,
+       }}
+      >
+        <Stack.Screen name="Home" component={ViewHomePage} />  
+        <Stack.Screen name="AppBlock" component={ViewAppBlock} /> 
+        <Stack.Screen name="ToDo" component={ViewToDoDashboard} /> 
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }
 
+const styles = StyleSheet.create({
+  header: {
+    backgroundColor: "transparent",
+  }
 
-// //uncomment to see To-DO Dashboard View
-// import ViewToDoDashboard from './AppInternals/Views/ViewToDoDashboard';
+
+
+});
+// import React from 'react';
+// import ViewHomePage from './AppInternals/Views/ViewHomePage';
 
 // export default function App() {
-//   return <ViewToDoDashboard />;
+//   return <ViewHomePage />;
 // }
+
+
+// // //uncomment to see To-DO Dashboard View
+// // import ViewToDoDashboard from './AppInternals/Views/ViewToDoDashboard';
+
+// // export default function App() {
+// //   return <ViewToDoDashboard />;
+// // }
+
+// // import ViewAppBlock from './AppInternals/Views/ViewAppBlock';
+
+// // export default function App() {
+// //   return <ViewAppBlock />;
+// // }
