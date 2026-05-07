@@ -120,9 +120,10 @@ export default function ViewAppBlock() {
         style={styles.background}
         resizeMode="cover"
     >
-        <View style={styles.spaceContainer}></View>
-        <View style={styles.container}>
+
         <Text style={styles.header}>App Blocking</Text>
+        <View style={styles.container}>
+        
 
         <Text style={styles.permissionText}>
             Permission Status: {permissionStatus ? "Granted" : "Not Granted"}
@@ -193,9 +194,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
 
-    spaceContainer: {
-        padding:30,
-    },
+    
 
     container: {
         flex: 1,
@@ -203,13 +202,15 @@ const styles = StyleSheet.create({
         backgroundColor: "transparent",
     },
 
-    headier: {
+    header: {
         fontSize: 26,
         fontWeight: "bold",
-        marginBottom: 15,
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center',
+        marginTop: 35,
+        marginBottom:10,
+        color: brownColor,
     },
 
     permissionText: {
@@ -219,10 +220,11 @@ const styles = StyleSheet.create({
 
     searchInput: {
         borderWidth: 1,
-        borderColor: "#cccccc",
+        borderColor: brownColor,
         borderRadius: 10,
         padding: 12,
         marginBottom: 20,
+        backgroundColor: inputBoxColor,
     },
 
     sectionTitle: {
@@ -237,41 +239,48 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: "#eeeeee",
+        margin: 5,
+        borderWidth: 1,
+        borderColor: "black",
+        backgroundColor: color4,
+        borderRadius: 10,
     },
 
     appName: {
         fontSize: 16,
         fontWeight: "600",
+        marginLeft: 10,
+        color: brownColor,
     },
 
     packageName: {
         fontSize: 12,
-        color: "#666666",
+        color: color6,
+        marginLeft: 10,
     },
 
     selectButton: {
         paddingVertical: 8,
         paddingHorizontal: 14,
         borderRadius: 8,
+        marginRight: 15,
     },
 
     addButton: {
-        backgroundColor: "#4CAF50",
+        backgroundColor: "#2f6439",
     },
 
     deselectButton: {
-        backgroundColor: "#D9534F",
+        backgroundColor: "#48160b",
     },
 
     buttonText: {
-        color: "#ffffff",
+        color: color6,
         fontWeight: "bold",
     },
 
     saveButton: {
-        backgroundColor: "#222222",
+        backgroundColor: color3,
         padding: 14,
         borderRadius: 10,
         marginTop: 20,
@@ -279,7 +288,7 @@ const styles = StyleSheet.create({
     },
 
     refreshButton: {
-        backgroundColor: "#555555",
+        backgroundColor: color4,
         padding: 14,
         borderRadius: 10,
         marginTop: 10,
@@ -287,7 +296,7 @@ const styles = StyleSheet.create({
     },
 
     saveButtonText: {
-        color: "#ffffff",
+        color: brownColor,
         fontWeight: "bold",
         fontSize: 16,
     },
@@ -295,7 +304,7 @@ const styles = StyleSheet.create({
     statusMessage: {
         marginTop: 15,
         fontSize: 14,
-        color: "#333333",
+        color: brownColor,
         textAlign: "center",
     },
 });

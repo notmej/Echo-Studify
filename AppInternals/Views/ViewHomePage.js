@@ -38,7 +38,6 @@ export default function ViewHomePage({navigation}) {
   };
 
 
-
   const showTimer = () => displayedTime;
   const showSessionCount = () => currentSessionCountDisplay;
   const showStreak = () => todayStreakDisplay;
