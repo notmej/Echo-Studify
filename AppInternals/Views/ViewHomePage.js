@@ -66,6 +66,7 @@ export default function ViewHomePage({navigation}) {
       <View style={styles.container}>
         <View style={styles.topBar}>
           <Text style={styles.logoText}>Studify</Text>
+          <Text style={styles.heading}>Home</Text>
           <TouchableOpacity style={styles.userIcon}>
             <Text style={styles.userIconText}>👤</Text>
           </TouchableOpacity>
@@ -76,7 +77,6 @@ export default function ViewHomePage({navigation}) {
         contentContainerStyle = {styles.contentScroll}
         showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.heading}>Home</Text>
           <TouchableOpacity style={styles.optionButton} onPress={goToModeSelection}>
             <Text style={styles.optionLabel}>Timer Mode</Text>
             <Text style={styles.optionValue}>{selectedTimerMode}</Text>
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: brownColor,
-    marginBottom: 20,
+    marginRight: 35,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
