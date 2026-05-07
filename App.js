@@ -24,7 +24,15 @@ export default function App() {
         headerTitleStyle: styles.headerTitle,
        }}
       >
-        <Stack.Screen name="Home" component={ViewHomePage} />  
+        <Stack.Screen 
+          name="Home" 
+          component={ViewHomePage} 
+          options={{
+            headerTitle: "",
+            headerBackVisible: true,
+          }}
+
+        />  
         <Stack.Screen 
           name="AppBlock" 
           component={ViewAppBlock} 
@@ -54,6 +62,9 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   }
 });
+
+
+//- - - - - - - OLD MANUAL TESTING - - - - - - - - -
 // import React from 'react';
 // import ViewHomePage from './AppInternals/Views/ViewHomePage';
 

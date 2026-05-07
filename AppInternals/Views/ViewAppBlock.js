@@ -8,7 +8,16 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  ImageBackground,
+  ScrollView,
 } from "react-native";
+
+const color1 = "#c49572"; 
+const color3 = "#876146";
+const color4 = "#a76c40";
+const color6 = "#f7d9b7";
+const brownColor = "#2a1902";
+const inputBoxColor = "#F3E4C9"
 
 export default function ViewAppBlock() {
   const [installedAppsList, setInstalledAppsList] = useState([]);
@@ -60,7 +69,7 @@ export default function ViewAppBlock() {
 
   function showInstalledApps() {
     // Temporary sample data.
-    // Later, this should come from the native Android module.
+    // Later should come from the native Android module.
     const apps = [
       {
         appName: "Instagram",
@@ -106,172 +115,187 @@ export default function ViewAppBlock() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>App Blocking</Text>
+    <ImageBackground
+        source={require('../../assets/background.jpg')}
+        style={styles.background}
+        resizeMode="cover"
+    >
+        <View style={styles.spaceContainer}></View>
+        <View style={styles.container}>
+        <Text style={styles.header}>App Blocking</Text>
 
-      <Text style={styles.permissionText}>
-        Permission Status: {permissionStatus ? "Granted" : "Not Granted"}
-      </Text>
+        <Text style={styles.permissionText}>
+            Permission Status: {permissionStatus ? "Granted" : "Not Granted"}
+        </Text>
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search installed apps..."
-        value={searchQuery}
-        onChangeText={onSearchApps}
-      />
+        <TextInput
+            style={styles.searchInput}
+            placeholder="Search installed apps..."
+            value={searchQuery}
+            onChangeText={onSearchApps}
+        />
 
-      <Text style={styles.sectionTitle}>Installed Apps</Text>
+        <Text style={styles.sectionTitle}>Installed Apps</Text>
 
-      <FlatList
-        data={filteredApps}
-        keyExtractor={(item) => item.packageName}
-        renderItem={({ item }) => {
-          const selected = isAppSelected(item);
+        <FlatList
+            data={filteredApps}
+            keyExtractor={(item) => item.packageName}
+            renderItem={({ item }) => {
+            const selected = isAppSelected(item);
 
-          return (
-            <View style={styles.appItem}>
-              <View>
-                <Text style={styles.appName}>{item.appName}</Text>
-                <Text style={styles.packageName}>{item.packageName}</Text>
-              </View>
+            return (
+                <View style={styles.appItem}>
+                <View>
+                    <Text style={styles.appName}>{item.appName}</Text>
+                    <Text style={styles.packageName}>{item.packageName}</Text>
+                </View>
 
-              <TouchableOpacity
-                style={[
-                  styles.selectButton,
-                  selected ? styles.deselectButton : styles.addButton,
-                ]}
-                onPress={() =>
-                  selected ? onDeselectApp(item) : onSelectApp(item)
-                }
-              >
-                <Text style={styles.buttonText}>
-                  {selected ? "Remove" : "Select"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          );
-        }}
-      />
+                <TouchableOpacity
+                    style={[
+                    styles.selectButton,
+                    selected ? styles.deselectButton : styles.addButton,
+                    ]}
+                    onPress={() =>
+                    selected ? onDeselectApp(item) : onSelectApp(item)
+                    }
+                >
+                    <Text style={styles.buttonText}>
+                    {selected ? "Remove" : "Select"}
+                    </Text>
+                </TouchableOpacity>
+                </View>
+            );
+            }}
+        />
 
-      <Text style={styles.sectionTitle}>
-        Selected Apps: {selectedApps.length}
-      </Text>
+        <Text style={styles.sectionTitle}>
+            Selected Apps: {selectedApps.length}
+        </Text>
 
-      <TouchableOpacity style={styles.saveButton} onPress={onSaveBlockedApps}>
-        <Text style={styles.saveButtonText}>Save Blocked Apps</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.saveButton} onPress={onSaveBlockedApps}>
+            <Text style={styles.saveButtonText}>Save Blocked Apps</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.refreshButton} onPress={refreshDisplay}>
-        <Text style={styles.saveButtonText}>Refresh Display</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.refreshButton} onPress={refreshDisplay}>
+            <Text style={styles.saveButtonText}>Refresh Display</Text>
+        </TouchableOpacity>
 
-      {statusMessage !== "" && (
-        <Text style={styles.statusMessage}>{statusMessage}</Text>
-      )}
-    </View>
+        {statusMessage !== "" && (
+            <Text style={styles.statusMessage}>{statusMessage}</Text>
+        )}
+        </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#ffffff",
-  },
+    background: {
+        flex: 1,
+    },
 
-  heading: {
-    fontSize: 26,
-    fontWeight: "bold",
-    marginBottom: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-  },
+    spaceContainer: {
+        padding:30,
+    },
 
-  permissionText: {
-    fontSize: 15,
-    marginBottom: 15,
-  },
+    container: {
+        flex: 1,
+        padding: 20,
+        backgroundColor: "transparent",
+    },
 
-  searchInput: {
-    borderWidth: 1,
-    borderColor: "#cccccc",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 20,
-  },
+    headier: {
+        fontSize: 26,
+        fontWeight: "bold",
+        marginBottom: 15,
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+    },
 
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginTop: 15,
-    marginBottom: 10,
-  },
+    permissionText: {
+        fontSize: 15,
+        marginBottom: 15,
+    },
 
-  appItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eeeeee",
-  },
+    searchInput: {
+        borderWidth: 1,
+        borderColor: "#cccccc",
+        borderRadius: 10,
+        padding: 12,
+        marginBottom: 20,
+    },
 
-  appName: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginTop: 15,
+        marginBottom: 10,
+    },
 
-  packageName: {
-    fontSize: 12,
-    color: "#666666",
-  },
+    appItem: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: "#eeeeee",
+    },
 
-  selectButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-  },
+    appName: {
+        fontSize: 16,
+        fontWeight: "600",
+    },
 
-  addButton: {
-    backgroundColor: "#4CAF50",
-  },
+    packageName: {
+        fontSize: 12,
+        color: "#666666",
+    },
 
-  deselectButton: {
-    backgroundColor: "#D9534F",
-  },
+    selectButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 8,
+    },
 
-  buttonText: {
-    color: "#ffffff",
-    fontWeight: "bold",
-  },
+    addButton: {
+        backgroundColor: "#4CAF50",
+    },
 
-  saveButton: {
-    backgroundColor: "#222222",
-    padding: 14,
-    borderRadius: 10,
-    marginTop: 20,
-    alignItems: "center",
-  },
+    deselectButton: {
+        backgroundColor: "#D9534F",
+    },
 
-  refreshButton: {
-    backgroundColor: "#555555",
-    padding: 14,
-    borderRadius: 10,
-    marginTop: 10,
-    alignItems: "center",
-  },
+    buttonText: {
+        color: "#ffffff",
+        fontWeight: "bold",
+    },
 
-  saveButtonText: {
-    color: "#ffffff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
+    saveButton: {
+        backgroundColor: "#222222",
+        padding: 14,
+        borderRadius: 10,
+        marginTop: 20,
+        alignItems: "center",
+    },
 
-  statusMessage: {
-    marginTop: 15,
-    fontSize: 14,
-    color: "#333333",
-    textAlign: "center",
-  },
+    refreshButton: {
+        backgroundColor: "#555555",
+        padding: 14,
+        borderRadius: 10,
+        marginTop: 10,
+        alignItems: "center",
+    },
+
+    saveButtonText: {
+        color: "#ffffff",
+        fontWeight: "bold",
+        fontSize: 16,
+    },
+
+    statusMessage: {
+        marginTop: 15,
+        fontSize: 14,
+        color: "#333333",
+        textAlign: "center",
+    },
 });

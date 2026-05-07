@@ -9,6 +9,13 @@ import {
   ImageBackground,
 } from 'react-native';
 
+const color1 = "#c49572"; 
+const color3 = "#876146";
+const color4 = "#a76c40";
+const color6 = "#f7d9b7";
+const brownColor = "#2a1902";
+const inputBoxColor = "#F3E4C9"
+
 export default function ViewHomePage({navigation}) {
   const [selectedTimerMode, setSelectedTimerMode] = useState('Pomodoro');
   const [durationInput, setDurationInput] = useState('25');
@@ -83,7 +90,7 @@ export default function ViewHomePage({navigation}) {
               onChangeText={setDurationInput}
               keyboardType="numeric"
               placeholder="Enter duration"
-              placeholderTextColor="#aa7f8d"
+              placeholderTextColor={color3}
             />
           </View>
     
@@ -133,7 +140,7 @@ export default function ViewHomePage({navigation}) {
         <TouchableOpacity style={styles.navButton}>
           <Text style={styles.navText}>Stats</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("AppBlock")}>
           <Text style={styles.navText}>App Blocking</Text>
         </TouchableOpacity>
       </View>
@@ -166,14 +173,14 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#4928c2',
+    color: brownColor,
   },
   
   userIcon: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#4928c2',
+    backgroundColor: color1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -191,7 +198,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#4928c2',
+    color: brownColor,
     marginBottom: 20,
     justifyContent: 'center',
     alignItems: 'center',
@@ -199,7 +206,7 @@ const styles = StyleSheet.create({
   },
 
   optionButton: {
-    backgroundColor: '#5b2a62',
+    backgroundColor: color3,
     padding: 15,
     borderRadius: 18,
     marginBottom: 15,
@@ -207,37 +214,37 @@ const styles = StyleSheet.create({
 
   optionLabel: {
     fontSize: 14,
-    color: '#e3d9fc',
+    color: brownColor,
     marginBottom: 5,
   },
 
   optionValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#e3d9fc',
+    color: brownColor,
   },
 
   inputBox: {
-    backgroundColor: '#5b2a62',
+    backgroundColor: color3,
     padding: 15,
     borderRadius: 18,
     marginBottom: 20,
   },
 
   input: {
-    backgroundColor: '#fff6f9',
+    backgroundColor: inputBoxColor,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#6e3a4b',
+    color: brownColor,
   },
 
   timerCard: {
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: '#5b2a62',
+    backgroundColor: color1,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
@@ -251,11 +258,11 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: 42,
     fontWeight: 'bold',
-    color: '#e3d9fc',
+    color: brownColor,
   },
 
   startButton: {
-    backgroundColor: '#5b2a62',
+    backgroundColor: color3,
     paddingVertical: 14,
     borderRadius: 18,
     alignItems: 'center',
@@ -263,7 +270,7 @@ const styles = StyleSheet.create({
   },
 
   stopButton: {
-    backgroundColor: '#bf40fa',
+    backgroundColor: color6,
     paddingVertical: 14,
     borderRadius: 18,
     alignItems: 'center',
@@ -271,7 +278,7 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: '#e3d9fc',
+    color:brownColor,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -284,7 +291,7 @@ const styles = StyleSheet.create({
 
   infoCard: {
     width: '48%',
-    backgroundColor: '#4928c2',
+    backgroundColor: color1,
     padding: 18,
     borderRadius: 18,
     alignItems: 'center',
@@ -299,7 +306,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#e3d9fc',
+    color: brownColor,
   },
 
   statusBox: {
@@ -323,7 +330,7 @@ const styles = StyleSheet.create({
 
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#4928c2',
+    backgroundColor: color3,
     paddingVertical: 20,
 
     borderTopLeftRadius: 20,
@@ -337,6 +344,6 @@ const styles = StyleSheet.create({
   navText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#040607',
+    color: brownColor,
   },
 });

@@ -9,6 +9,15 @@ import {
   ImageBackground,
 } from 'react-native';
 
+const color1 = "#c49572"; 
+const color3 = "#876146";
+const color4 = "#a76c40";
+const color6 = "#f7d9b7";
+const color7 = '#8a4159';
+const brownColor = "#2a1902";
+const inputBoxColor = "#F3E4C9"
+
+
 export default function ViewToDoDashboard({navigation}) {
   const [taskList, setTaskList] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Easy');
@@ -90,21 +99,21 @@ export default function ViewToDoDashboard({navigation}) {
           <TextInput
             style={styles.input}
             placeholder="Task title"
-            placeholderTextColor="#bf40fa"
+            placeholderTextColor={brownColor}
             value={taskInput}
             onChangeText={setTaskInput}
           />
           <TextInput
             style={styles.input}
             placeholder="Description"
-            placeholderTextColor="#bf40fa"
+            placeholderTextColor={brownColor}
             value={taskDescription}
             onChangeText={setTaskDescription}
           />
           <TextInput
             style={styles.input}
             placeholder="Due Date"
-            placeholderTextColor="#bf40fa"
+            placeholderTextColor={brownColor}
             value={dueDate}
             onChangeText={setDueDate}
           />
@@ -206,7 +215,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#9c4f68',
+    color: brownColor,
     marginBottom: 15,
     justifyContent: 'center',
     alignItems: 'center',
@@ -214,18 +223,18 @@ const styles = StyleSheet.create({
   },
 
   inputCard: {
-    backgroundColor: '#5b2a62',
+    backgroundColor: color3,
     padding: 15,
     borderRadius: 19,
     marginBottom: 15,
   },
 
   input: {
-    backgroundColor: '#040607',
+    backgroundColor: inputBoxColor,
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
-    color: "#bf40fa",
+    color: color3,
   },
 
   row: {
@@ -237,32 +246,32 @@ const styles = StyleSheet.create({
   categoryButton: {
     padding: 8,
     borderRadius: 10,
-    backgroundColor: '#4928c2',
+    backgroundColor: color4,
   },
 
   selectedCategory: {
-    backgroundColor: '#bf40fa',
+    backgroundColor: color6,
   },
 
   categoryText: {
-    color: '#040607',
+    color: brownColor,
   },
 
   createButton: {
-    backgroundColor: '#bf40fa',
+    backgroundColor: color1,
     padding: 12,
     borderRadius: 15,
     alignItems: 'center',
   },
 
   buttonText: {
-    color: '#40607',
+    color: brownColor,
     fontWeight: 'bold',
   },
 
   filterText: {
-    backgroundColor: "#e3d9fc",
-    color: '#4928c2',
+    backgroundColor: color6,
+    color: color4,
     fontWeight: '600',
 
     borderRadius: 20,
@@ -270,10 +279,11 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     paddingLeft: 20,
     paddingRight: 20,
+    borderBlockColor: color3,
   },
 
   taskCard: {
-    backgroundColor: '#ffdbe7',
+    backgroundColor: color6,
     padding: 15,
     borderRadius: 15,
     marginBottom: 10,
@@ -291,7 +301,7 @@ const styles = StyleSheet.create({
   },
   taskInfo: {
     fontSize: 12,
-    color: '#8a4159',
+    color: brownColor,
     marginVertical: 5,
   },
   actionText: {
@@ -301,7 +311,7 @@ const styles = StyleSheet.create({
   status: {
     textAlign: 'center',
     marginTop: 10,
-    color: '#8a4159',
+    color: brownColor,
   },
 
   navBar: {
@@ -312,7 +322,7 @@ const styles = StyleSheet.create({
 
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#4928c2',
+    backgroundColor: color3,
     paddingVertical: 20,
 
     borderTopLeftRadius: 20,
@@ -326,6 +336,6 @@ const styles = StyleSheet.create({
   navText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#040607',
+    color: brownColor,
   },
 });
