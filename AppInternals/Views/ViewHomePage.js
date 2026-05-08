@@ -50,7 +50,7 @@ export default function ViewHomePage({navigation}) {
 
 
   const goToAppBlockSelection = () => {
-    navigartion.navigate("AppBlock");
+    navigation.navigate("AppBlock");
     setStatusMessage('Navigate to blocked apps selection');
   };
 

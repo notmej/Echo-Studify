@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     margin: 5,
     borderWidth: 1,
     borderColor: "black",
-    backgroundColor: color4,
+    backgroundColor: color3,
     borderRadius: 10,
     },
 
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     appName: {
     fontSize: 16,
     fontWeight: "600",
-    color: brownColor,
+    color: color6,
     },
 
     //   packageName: {
