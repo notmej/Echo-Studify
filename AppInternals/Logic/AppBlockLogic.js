@@ -4,6 +4,14 @@ let blockingRules = [];
 let blockingState = false;
 let logicStatusMessage = "";
 
+function isValidPackageName(packageName) {
+  return (
+    typeof packageName === "string" &&
+    packageName.trim().length > 0 &&
+    packageName.includes(".")
+  );
+}
+
 function validateSelectedApps(apps) {
   if (!apps || apps.length === 0) {
     validatedApps = [];
@@ -16,7 +24,7 @@ function validateSelectedApps(apps) {
   }
 
   validatedApps = apps.filter((app) => {
-    return app.appName && app.packageName;
+    return app && app.appName && isValidPackageName(app.packageName);
   });
 
   if (validatedApps.length === 0) {
@@ -43,6 +51,7 @@ function prepareBlockList(apps) {
   if (!validationResult.isValid) {
     return {
       blockList: [],
+      packageNames: [],
       logicStatusMessage: validationResult.logicStatusMessage,
     };
   }
@@ -56,10 +65,13 @@ function prepareBlockList(apps) {
     };
   });
 
+  const packageNames = [...new Set(blockList.map((app) => app.packageName))];
+
   logicStatusMessage = "Block list prepared.";
 
   return {
     blockList,
+    packageNames,
     logicStatusMessage,
   };
 }
@@ -121,6 +133,11 @@ function updateBlockingRules(apps) {
   };
 }
 
+function getPackageNames(apps) {
+  const preparedResult = prepareBlockList(apps);
+  return preparedResult.packageNames;
+}
+
 function clearBlockedApps() {
   selectedApps = [];
   validatedApps = [];
@@ -143,5 +160,6 @@ export default {
   applyBlockingRules,
   checkBlockingState,
   updateBlockingRules,
+  getPackageNames,
   clearBlockedApps,
 };

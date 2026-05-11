@@ -1,0 +1,458 @@
+// AppInternals/Repository/TimerRepo.js
+
+import * as SQLite from "expo-sqlite";
+
+class TimerRepo {
+  constructor() {
+    this.db = null;
+
+    this.sessionList = [];
+    this.activeSession = null;
+    this.timerState = null;
+    this.startTime = null;
+    this.endTime = null;
+    this.repositoryStatus = "not initialized";
+  }
+
+  async init() {
+    try {
+      this.db = await SQLite.openDatabaseAsync("studify.db");
+
+      await this.db.execAsync(`
+        PRAGMA journal_mode = WAL;
+
+        CREATE TABLE IF NOT EXISTS TimerModeSettings (
+          SettingID INTEGER PRIMARY KEY CHECK (SettingID = 1),
+          TimerMode TEXT NOT NULL,
+          CustomDurationMinutes REAL NOT NULL DEFAULT 25,
+          PomodoroWorkIntervalMinutes REAL NOT NULL DEFAULT 25,
+          PomodoroBreakIntervalMinutes REAL NOT NULL DEFAULT 5,
+          PomodoroIntervalCount INTEGER NOT NULL DEFAULT 1,
+          UpdatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS TimerDailyStart (
+          SessionDate TEXT PRIMARY KEY NOT NULL,
+          FirstStartTime TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS TimerSessions (
+          SessionID INTEGER PRIMARY KEY AUTOINCREMENT,
+          TimerMode TEXT NOT NULL,
+          StartTime TEXT NOT NULL,
+          EndTime TEXT,
+          DurationSeconds INTEGER NOT NULL DEFAULT 0,
+          CustomDurationMinutes REAL,
+          PomodoroWorkIntervalMinutes REAL,
+          PomodoroBreakIntervalMinutes REAL,
+          PomodoroIntervalCount INTEGER,
+          TimerState TEXT,
+          IsActive INTEGER NOT NULL DEFAULT 0,
+          FirstStartOfDay TEXT,
+          CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+
+        INSERT OR IGNORE INTO TimerModeSettings (
+          SettingID,
+          TimerMode,
+          CustomDurationMinutes,
+          PomodoroWorkIntervalMinutes,
+          PomodoroBreakIntervalMinutes,
+          PomodoroIntervalCount
+        )
+        VALUES (1, 'Pomodoro', 25, 25, 5, 1);
+      `);
+
+      this.repositoryStatus = "ready";
+      await this.getActiveSession();
+      await this.getSessionHistory();
+
+      return true;
+    } catch (error) {
+      this.repositoryStatus = "error";
+      console.log("TimerRepo init error:", error);
+      return false;
+    }
+  }
+
+  async ensureReady() {
+    if (!this.db) {
+      await this.init();
+    }
+  }
+
+  getDateOnly(dateObject) {
+    return dateObject.toISOString().split("T")[0];
+  }
+
+  async getFirstStartOfDay(now) {
+    await this.ensureReady();
+
+    const sessionDate = this.getDateOnly(now);
+
+    let dailyStartRow = await this.db.getFirstAsync(
+      `
+      SELECT FirstStartTime
+      FROM TimerDailyStart
+      WHERE SessionDate = ?;
+      `,
+      sessionDate
+    );
+
+    if (!dailyStartRow) {
+      await this.db.runAsync(
+        `
+        INSERT INTO TimerDailyStart (SessionDate, FirstStartTime)
+        VALUES (?, ?);
+        `,sessionDate, now.toISOString()
+      );
+
+      dailyStartRow = {
+        FirstStartTime: now.toISOString(),
+      };
+    }
+
+    return dailyStartRow.FirstStartTime;
+  }
+
+  async saveModeSelection(modeSelection) {
+    try {
+        await this.ensureReady();
+
+        if (!modeSelection) {
+        throw new Error("No mode selection was provided.");
+        }
+
+        const selectedMode = modeSelection.selectedMode;
+
+        const timerMode =
+        typeof selectedMode === "string"
+            ? selectedMode
+            : selectedMode?.modeName || "Pomodoro";
+
+        const customDuration = Number(modeSelection.customDuration) || 25;
+        const pomodoroWorkInterval =
+        Number(modeSelection.pomodoroWorkInterval) || 25;
+        const pomodoroBreakInterval =
+        Number(modeSelection.pomodoroBreakInterval) || 5;
+        const pomodoroIntervalCount =
+        Number(modeSelection.pomodoroIntervalCount) || 1;
+
+        await this.db.runAsync(
+        `
+        INSERT OR REPLACE INTO TimerModeSettings (
+            SettingID,
+            TimerMode,
+            CustomDurationMinutes,
+            PomodoroWorkIntervalMinutes,
+            PomodoroBreakIntervalMinutes,
+            PomodoroIntervalCount,
+            UpdatedAt
+        )
+        VALUES (1, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
+        `,
+        timerMode,
+        customDuration,
+        pomodoroWorkInterval,
+        pomodoroBreakInterval,
+        pomodoroIntervalCount
+        );
+
+        return true;
+    } catch (error) {
+        console.log("TimerRepo saveModeSelection error:", error);
+        return false;
+    }
+    }
+
+  async getModeSelection() {
+    try {
+      await this.ensureReady();
+
+      const row = await this.db.getFirstAsync(`
+        SELECT
+          TimerMode,
+          CustomDurationMinutes,
+          PomodoroWorkIntervalMinutes,
+          PomodoroBreakIntervalMinutes,
+          PomodoroIntervalCount
+        FROM TimerModeSettings
+        WHERE SettingID = 1;
+      `);
+
+      if (!row) {
+        return null;
+      }
+
+      return {
+        timerMode: row.TimerMode,
+        customDuration: String(row.CustomDurationMinutes),
+        pomodoroWorkInterval: String(row.PomodoroWorkIntervalMinutes),
+        pomodoroBreakInterval: String(row.PomodoroBreakIntervalMinutes),
+        pomodoroIntervalCount: row.PomodoroIntervalCount,
+      };
+    } catch (error) {
+      console.log("TimerRepo getModeSelection error:", error);
+      return null;
+    }
+  }
+
+  async saveSession(session) {
+    try {
+        await this.ensureReady();
+
+        const result = await this.db.runAsync(
+        `
+        INSERT INTO TimerSessions (
+            TimerMode,
+            StartTime,
+            EndTime,
+            DurationSeconds,
+            CustomDurationMinutes,
+            PomodoroWorkIntervalMinutes,
+            PomodoroBreakIntervalMinutes,
+            PomodoroIntervalCount,
+            TimerState,
+            IsActive,
+            FirstStartOfDay
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `,
+        session.timerMode,
+        session.startTime,
+        session.endTime || null,
+        Number(session.durationSeconds) || 0,
+        Number(session.customDuration) || 0,
+        Number(session.pomodoroWorkInterval) || 0,
+        Number(session.pomodoroBreakInterval) || 0,
+        Number(session.pomodoroIntervalCount) || 0,
+        JSON.stringify(session.timerState || {}),
+        session.isActive ? 1 : 0,
+        session.firstStartOfDay || null
+        );
+
+        await this.getSessionHistory();
+
+        return result.lastInsertRowId;
+    } catch (error) {
+        console.log("TimerRepo saveSession error:", error);
+        return null;
+    }
+    }
+
+  async startSession(modeSelection, initialTimerState) {
+    try {
+      await this.ensureReady();
+
+      await this.clearActiveSession();
+
+      const now = new Date();
+      const firstStartOfDay = await this.getFirstStartOfDay(now);
+      const selectedMode = modeSelection.selectedMode;
+      const timerMode =
+        typeof selectedMode === "string" ? selectedMode : selectedMode.modeName;
+
+      const newSession = {
+        timerMode,
+        startTime: now.toISOString(),
+        endTime: null,
+        durationSeconds: 0,
+        customDuration: Number(modeSelection.customDuration) || 0,
+        pomodoroWorkInterval: Number(modeSelection.pomodoroWorkInterval) || 0,
+        pomodoroBreakInterval: Number(modeSelection.pomodoroBreakInterval) || 0,
+        pomodoroIntervalCount: Number(modeSelection.pomodoroIntervalCount) || 0,
+        timerState: initialTimerState,
+        isActive: true,
+        firstStartOfDay,
+      };
+
+      const sessionID = await this.saveSession(newSession);
+
+      this.activeSession = {
+        SessionID: sessionID,
+        ...newSession,
+      };
+
+      this.startTime = newSession.startTime;
+      this.timerState = initialTimerState;
+      this.repositoryStatus = "active session started";
+
+      return this.activeSession;
+    } catch (error) {
+      console.log("TimerRepo startSession error:", error);
+      this.repositoryStatus = "error";
+      return null;
+    }
+  }
+
+  async stopSession(finalTimerState) {
+    try {
+      await this.ensureReady();
+
+      const activeSession = await this.getActiveSession();
+
+      if (!activeSession) {
+        return null;
+      }
+
+      const now = new Date();
+      const durationSeconds =
+        finalTimerState?.elapsedSeconds ??
+        Math.floor(
+          (now.getTime() - new Date(activeSession.StartTime).getTime()) / 1000
+        );
+
+      await this.db.runAsync(
+        `
+        UPDATE TimerSessions
+        SET
+          EndTime = ?,
+          DurationSeconds = ?,
+          TimerState = ?,
+          IsActive = 0
+        WHERE SessionID = ?;
+        `,
+          now.toISOString(),
+          Number(durationSeconds) || 0,
+          JSON.stringify(finalTimerState || {}),
+          activeSession.SessionID,
+      );
+
+      this.endTime = now.toISOString();
+      this.timerState = finalTimerState || null;
+      this.activeSession = null;
+      this.repositoryStatus = "active session stopped";
+
+      await this.getSessionHistory();
+
+      return true;
+    } catch (error) {
+      console.log("TimerRepo stopSession error:", error);
+      this.repositoryStatus = "error";
+      return false;
+    }
+  }
+
+  async updateTimerState(timerState) {
+    try {
+      await this.ensureReady();
+
+      const activeSession = await this.getActiveSession();
+
+      if (!activeSession) {
+        return false;
+      }
+
+      await this.db.runAsync(
+        `
+        UPDATE TimerSessions
+        SET
+          TimerState = ?,
+          DurationSeconds = ?
+        WHERE SessionID = ?;
+        `,
+          JSON.stringify(timerState || {}),
+          Number(timerState?.elapsedSeconds) || 0,
+          activeSession.SessionID,
+      );
+
+      this.timerState = timerState;
+      return true;
+    } catch (error) {
+      console.log("TimerRepo updateTimerState error:", error);
+      return false;
+    }
+  }
+
+  async getActiveSession() {
+    try {
+      await this.ensureReady();
+
+      const row = await this.db.getFirstAsync(`
+        SELECT *
+        FROM TimerSessions
+        WHERE IsActive = 1
+        ORDER BY SessionID DESC
+        LIMIT 1;
+      `);
+
+      if (!row) {
+        this.activeSession = null;
+        return null;
+      }
+
+      this.activeSession = row;
+
+      try {
+        this.timerState = row.TimerState ? JSON.parse(row.TimerState) : null;
+      } catch {
+        this.timerState = null;
+      }
+
+      return row;
+    } catch (error) {
+      console.log("TimerRepo getActiveSession error:", error);
+      return null;
+    }
+  }
+
+  async getSessionHistory() {
+    try {
+      await this.ensureReady();
+
+      const rows = await this.db.getAllAsync(`
+        SELECT *
+        FROM TimerSessions
+        WHERE IsActive = 0
+        ORDER BY StartTime DESC;
+      `);
+
+      this.sessionList = rows;
+      return this.sessionList;
+    } catch (error) {
+      console.log("TimerRepo getSessionHistory error:", error);
+      return [];
+    }
+  }
+
+  async clearActiveSession() {
+    try {
+      await this.ensureReady();
+
+      await this.db.runAsync(`
+        UPDATE TimerSessions
+        SET IsActive = 0
+        WHERE IsActive = 1;
+      `);
+
+      this.activeSession = null;
+      this.timerState = null;
+
+      return true;
+    } catch (error) {
+      console.log("TimerRepo clearActiveSession error:", error);
+      return false;
+    }
+  }
+
+  async clearSessionHistory() {
+    try {
+      await this.ensureReady();
+
+      await this.db.runAsync(`DELETE FROM TimerSessions;`);
+
+      this.sessionList = [];
+      this.activeSession = null;
+      this.timerState = null;
+
+      return true;
+    } catch (error) {
+      console.log("TimerRepo clearSessionHistory error:", error);
+      return false;
+    }
+  }
+}
+
+const timerRepo = new TimerRepo();
+
+export default timerRepo;

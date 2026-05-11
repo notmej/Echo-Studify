@@ -1,65 +1,59 @@
-import React, { useState } from 'react';
+// AppInternals/Views/ViewHomePage.js
+
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   ImageBackground,
-} from 'react-native';
+} from "react-native";
 
-const color1 = "#c49572"; 
+import ViewModelHomePage from "../ViewModels/ViewModelHomepage";
+import TimerModeSelectionComponent from "../Components/TimerModeSelectionComponent";
+
+const color1 = "#c49572";
 const color3 = "#876146";
 const color4 = "#a76c40";
 const color6 = "#f7d9b7";
 const brownColor = "#2a1902";
-const inputBoxColor = "#F3E4C9"
+const inputBoxColor = "#F3E4C9";
 
-export default function ViewHomePage({navigation}) {
-  const [selectedTimerMode, setSelectedTimerMode] = useState('Pomodoro');
-  const [durationInput, setDurationInput] = useState('25');
-  const [displayedTime, setDisplayedTime] = useState('25:00');
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [currentSessionCountDisplay, setCurrentSessionCountDisplay] = useState(3);
-  const [todayStreakDisplay, setTodayStreakDisplay] = useState(5);
-  const [selectedBlockedApps, setSelectedBlockedApps] = useState(['Instagram', 'TikTok']);
-  const [statusMessage, setStatusMessage] = useState('Ready to focus');
+export default function ViewHomePage({ navigation }) {
+  const {
+    selectedMode,
+    availableModes,
+    customDuration,
+    pomodoroWorkInterval,
+    pomodoroBreakInterval,
+    statusMessage,
 
-  const onStartSession = () => {
-    setIsTimerRunning(true);
-    setStatusMessage('Study session started');
-  };
+    isTimerRunning,
+    selectedBlockedApps,
+    modeSelectionVisible,
 
+    selectMode,
+    setCustomDuration,
+    setPomodoroIntervals,
+    saveModeSelection,
+    displayAvailableModes,
+    resetModeSettings,
 
-  const onStopSession = () => {
-    setIsTimerRunning(false);
-    setStatusMessage('Study session stopped');
-  };
-
-
-  const showTimer = () => displayedTime;
-  const showSessionCount = () => currentSessionCountDisplay;
-  const showStreak = () => todayStreakDisplay;
-
-
-  const goToModeSelection = () => {
-    setStatusMessage('Navigate to timer mode selection');
-  };
-
-
-
-  const goToAppBlockSelection = () => {
-    navigation.navigate("AppBlock");
-    setStatusMessage('Navigate to blocked apps selection');
-  };
-
-  const showStatusMessage = () => statusMessage;
-
+    onStartSession,
+    onStopSession,
+    showTimer,
+    showSessionCount,
+    showStreak,
+    showStatusMessage,
+    showTimerPhase,
+    goToModeSelection,
+    goToAppBlockSelection,
+  } = ViewModelHomePage(navigation);
 
   return (
     <ImageBackground
-      source={require('../../assets/background.jpg')}
+      source={require("../../assets/background.jpg")}
       style={styles.background}
       resizeMode="cover"
     >
@@ -73,29 +67,36 @@ export default function ViewHomePage({navigation}) {
         </View>
 
         <ScrollView
-        style = {styles.content}
-        contentContainerStyle = {styles.contentScroll}
-        showsVerticalScrollIndicator={false}
+          style={styles.content}
+          contentContainerStyle={styles.contentScroll}
+          showsVerticalScrollIndicator={false}
         >
           <TouchableOpacity style={styles.optionButton} onPress={goToModeSelection}>
             <Text style={styles.optionLabel}>Timer Mode</Text>
-            <Text style={styles.optionValue}>{selectedTimerMode}</Text>
+            <Text style={styles.optionValue}>
+              {selectedMode?.modeName || "No mode selected"}
+            </Text>
           </TouchableOpacity>
-          <View style={styles.inputBox}>
-            <Text style={styles.optionLabel}>Duration (minutes)</Text>
-            <TextInput
-              style={styles.input}
-              value={durationInput}
-              onChangeText={setDurationInput}
-              keyboardType="numeric"
-              placeholder="Enter duration"
-              placeholderTextColor={color3}
-            />
-          </View>
-    
 
-          {/* Timer Module */}
+          {modeSelectionVisible && (
+            <TimerModeSelectionComponent
+              selectedMode={selectedMode}
+              availableModes={availableModes}
+              customDuration={customDuration}
+              pomodoroWorkInterval={pomodoroWorkInterval}
+              pomodoroBreakInterval={pomodoroBreakInterval}
+              statusMessage={statusMessage}
+              selectMode={selectMode}
+              setCustomDuration={setCustomDuration}
+              setPomodoroIntervals={setPomodoroIntervals}
+              saveModeSelection={saveModeSelection}
+              displayAvailableModes={displayAvailableModes}
+              resetModeSettings={resetModeSettings}
+            />
+          )}
+
           <View style={styles.timerCard}>
+            <Text style={styles.phaseText}>{showTimerPhase()}</Text>
             <Text style={styles.timerText}>{showTimer()}</Text>
           </View>
 
@@ -114,56 +115,70 @@ export default function ViewHomePage({navigation}) {
               <Text style={styles.infoTitle}>Sessions</Text>
               <Text style={styles.infoValue}>{showSessionCount()}</Text>
             </View>
+
             <View style={styles.infoCard}>
               <Text style={styles.infoTitle}>Streak</Text>
               <Text style={styles.infoValue}>{showStreak()} days</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.optionButton} onPress={() => navigation.navigate("AppBlock")}>
+
+          <TouchableOpacity style={styles.optionButton} onPress={goToAppBlockSelection}>
             <Text style={styles.optionLabel}>Blocked Apps</Text>
-            <Text style={styles.optionValue}>{selectedBlockedApps.join(', ')}</Text>
+            <Text style={styles.optionValue}>
+              {selectedBlockedApps.length > 0
+                ? selectedBlockedApps.join(", ")
+                : "Open app blocking page"}
+            </Text>
           </TouchableOpacity>
+
           <View style={styles.statusBox}>
             <Text style={styles.statusText}>{showStatusMessage()}</Text>
           </View>
         </ScrollView>
 
-      {/*Navigartion bar*/}
-      <View style={styles.navBar}>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("ToDo")}>
-          <Text style={styles.navText}>Tasks</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navText}>Stats</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("AppBlock")}>
-          <Text style={styles.navText}>App Blocking</Text>
-        </TouchableOpacity>
+        <View style={styles.navBar}>
+          <TouchableOpacity style={styles.navButton}>
+            <Text style={styles.navText}>Home</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => navigation.navigate("ToDo")}
+          >
+            <Text style={styles.navText}>Tasks</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navButton}>
+            <Text style={styles.navText}>Stats</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => navigation.navigate("AppBlock")}
+          >
+            <Text style={styles.navText}>App Blocking</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-
   background: {
     flex: 1,
   },
 
   container: {
     flex: 1,
-    backgroundColor: 'transparent', //040607
-    justifyContent: 'space-between',
+    backgroundColor: "transparent",
+    justifyContent: "space-between",
   },
 
   topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 55,
     paddingBottom: 10,
@@ -171,19 +186,19 @@ const styles = StyleSheet.create({
 
   logoText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: brownColor,
   },
-  
+
   userIcon: {
     width: 42,
     height: 42,
     borderRadius: 21,
     backgroundColor: color1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  
+
   userIconText: {
     fontSize: 20,
   },
@@ -194,14 +209,18 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
 
+  contentScroll: {
+    paddingBottom: 120,
+  },
+
   heading: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: brownColor,
     marginRight: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
   },
 
   optionButton: {
@@ -213,50 +232,41 @@ const styles = StyleSheet.create({
 
   optionLabel: {
     fontSize: 14,
-    color: brownColor,
+    color: color6,
     marginBottom: 5,
   },
 
   optionValue: {
     fontSize: 16,
-    fontWeight: '600',
-    color: brownColor,
-  },
-
-  inputBox: {
-    backgroundColor: color3,
-    padding: 15,
-    borderRadius: 18,
-    marginBottom: 20,
-  },
-
-  input: {
-    backgroundColor: inputBoxColor,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: brownColor,
+    fontWeight: "600",
+    color: color6,
   },
 
   timerCard: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 230,
+    height: 230,
+    borderRadius: 115,
     backgroundColor: color1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 3,
   },
 
+  phaseText: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: brownColor,
+    marginBottom: 8,
+  },
+
   timerText: {
     fontSize: 42,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: brownColor,
   },
 
@@ -264,7 +274,7 @@ const styles = StyleSheet.create({
     backgroundColor: color3,
     paddingVertical: 14,
     borderRadius: 18,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
 
@@ -272,63 +282,64 @@ const styles = StyleSheet.create({
     backgroundColor: color6,
     paddingVertical: 14,
     borderRadius: 18,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
 
   buttonText: {
-    color:brownColor,
+    color: brownColor,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 
   infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 15,
   },
 
   infoCard: {
-    width: '48%',
+    width: "48%",
     backgroundColor: color1,
     padding: 18,
     borderRadius: 18,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   infoTitle: {
     fontSize: 16,
-    color: '#040607',
+    color: "#040607",
     marginBottom: 6,
   },
 
   infoValue: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: brownColor,
   },
 
   statusBox: {
     marginTop: 10,
-    backgroundColor: '#00000',
+    backgroundColor: inputBoxColor,
     padding: 14,
     borderRadius: 14,
   },
 
   statusText: {
     fontSize: 15,
-    color: '#00000',
-    textAlign: 'center',
+    color: brownColor,
+    textAlign: "center",
+    fontWeight: "600",
   },
 
   navBar: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
 
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     backgroundColor: color3,
     paddingVertical: 20,
 
@@ -337,12 +348,12 @@ const styles = StyleSheet.create({
   },
 
   navButton: {
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   navText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: brownColor,
   },
 });
