@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import ViewModelToDoDashboard from "../ViewModels/ViewModelToDoDashboard";
-import TaskCategoryComponent from "../Components/TaskCategoryComponent";
+import TaskCategoryComponent from "../Components/TaskAndEnergyCategoryComponent";
 
 const color1 = "#c49572";
 const color3 = "#876146";
