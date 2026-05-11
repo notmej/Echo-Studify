@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -7,219 +7,292 @@ import {
   TextInput,
   FlatList,
   ImageBackground,
-} from 'react-native';
+  ScrollView,
+} from "react-native";
 
-const color1 = "#c49572"; 
+import ViewModelToDoDashboard from "../ViewModels/ViewModelToDoDashboard";
+import TaskCategoryComponent from "../Components/TaskCategoryComponent";
+
+const color1 = "#c49572";
 const color3 = "#876146";
 const color4 = "#a76c40";
 const color6 = "#f7d9b7";
-const color7 = '#8a4159';
 const brownColor = "#2a1902";
-const inputBoxColor = "#F3E4C9"
+const inputBoxColor = "#F3E4C9";
 
+export default function ViewToDoDashboard({ navigation }) {
+  const {
+    displayedTaskList,
 
-export default function ViewToDoDashboard({navigation}) {
-  const [taskList, setTaskList] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('Easy');
-  const [taskInput, setTaskInput] = useState('');
-  const [taskDescription, setTaskDescription] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [filterOption, setFilterOption] = useState('All');
-  const [sortOption, setSortOption] = useState('None');
-  const [statusMessage, setStatusMessage] = useState('No tasks yet');
+    taskInput,
+    setTaskInput,
+    taskDescription,
+    setTaskDescription,
+    dueDate,
+    setDueDate,
+    selectedDifficulty,
+    setSelectedDifficulty,
 
+    dailyEnergyLevel,
+    filterOption,
+    difficultyOptions,
+    filterOptions,
+    energyOptions,
 
-  const onCreateTask = () => {
-    if (!taskInput) return;
-    const newTask = {
-      id: Date.now().toString(),
-      title: taskInput,
-      description: taskDescription,
-      category: selectedCategory,
-      dueDate: dueDate,
-      completed: false,
-    };
+    onCreateTask,
+    onDeleteTask,
+    onMarkComplete,
+    onMoveTask,
+    onFilterChange,
+    onDailyEnergyChange,
+    onClearDailyEnergy,
+    showStatusMessage,
 
-    setTaskList([...taskList, newTask]);
-    setTaskInput('');
-    setTaskDescription('');
-    setDueDate('');
-    setStatusMessage('Task created');
-  };
-  const onDeleteTask = (id) => {
-    setTaskList(taskList.filter(task => task.id !== id));
-    setStatusMessage('Task deleted');
-  };
+    goToHome,
+    goToStats,
+    goToAppBlock,
+  } = ViewModelToDoDashboard(navigation);
 
-  const onMarkComplete = (id) => {
-    setTaskList(taskList.map(task =>
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
-    setStatusMessage('Task updated');
-  };
-  const onEditTask = () => {
-    setStatusMessage('Edit feature coming soon');
+  function renderTask({ item }) {
+    const isCompleted = Number(item.IsCompleted) === 1;
+
+    return (
+      <View style={styles.taskCard}>
+        <Text style={[styles.taskTitle, isCompleted && styles.completedTask]}>
+          {item.TaskTitle}
+        </Text>
+
+        {item.TaskDescription ? (
+          <Text style={styles.taskDescription}>{item.TaskDescription}</Text>
+        ) : null}
+
+        <Text style={styles.taskInfo}>
+          Difficulty: {item.DifficultyLevel || "None"}
+          {item.DueDate ? " | Due: " + item.DueDate : ""}
+        </Text>
+
+        <View style={styles.taskActionRow}>
+          <TouchableOpacity
+            style={styles.smallActionButton}
+            onPress={() => onMarkComplete(item.TaskID)}
+          >
+            <Text style={styles.actionText}>{isCompleted ? "Undo" : "Done"}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.smallActionButton}
+            onPress={() => onMoveTask(item.TaskID, "up")}
+          >
+            <Text style={styles.actionText}>↑</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.smallActionButton}
+            onPress={() => onMoveTask(item.TaskID, "down")}
+          >
+            <Text style={styles.actionText}>↓</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => onDeleteTask(item.TaskID)}
+          >
+            <Text style={styles.actionText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   }
-  const onFilterChange = (filter) => {
-    setFilterOption(filter);
-  };
-  const onSortChange = (sort) => {
-    setSortOption(sort);
-  };
-
-  const displayTasks = () => {
-    let filtered = [...taskList];
-    if (filterOption === 'Completed') {
-      filtered = filtered.filter(task => task.completed);
-    } else if (filterOption === 'Pending') {
-      filtered = filtered.filter(task => !task.completed);
-    }
-
-
-    if (sortOption === 'DueDate') {
-      filtered.sort((a, b) => (a.dueDate > b.dueDate ? 1 : -1));
-    }
-
-    return filtered;
-  };
-
-  const showStatusMessage = () => statusMessage;
 
   return (
     <ImageBackground
-      source={require('../../assets/background.jpg')}
+      source={require("../../assets/background.jpg")}
       style={styles.background}
       resizeMode="cover"
     >
       <View style={styles.container}>
         <Text style={styles.heading}>Tasks</Text>
 
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentScroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.energyCard}>
+            <Text style={styles.cardTitle}>Daily Energy</Text>
+            <Text style={styles.energyText}>
+              Current: {dailyEnergyLevel || "Not chosen today"}
+            </Text>
 
-        <View style={styles.inputCard}>
-          <TextInput
-            style={styles.input}
-            placeholder="Task title"
-            placeholderTextColor={brownColor}
-            value={taskInput}
-            onChangeText={setTaskInput}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Description"
-            placeholderTextColor={brownColor}
-            value={taskDescription}
-            onChangeText={setTaskDescription}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Due Date"
-            placeholderTextColor={brownColor}
-            value={dueDate}
-            onChangeText={setDueDate}
-          />
+            <TaskCategoryComponent
+              label="Choose today's energy level"
+              selectedValue={dailyEnergyLevel}
+              options={energyOptions}
+              onSelectValue={onDailyEnergyChange}
+              placeholder="No energy chosen"
+              allowEmpty={true}
+            />
 
-          <View style={styles.row}>
-            {['Easy', 'Medium', 'Hard'].map(cat => (
+            <TouchableOpacity
+              style={styles.clearEnergyButton}
+              onPress={onClearDailyEnergy}
+            >
+              <Text style={styles.clearEnergyText}>Clear Energy</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputCard}>
+            <Text style={styles.cardTitle}>Add Task</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Task title"
+              placeholderTextColor={brownColor}
+              value={taskInput}
+              onChangeText={setTaskInput}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Description"
+              placeholderTextColor={brownColor}
+              value={taskDescription}
+              onChangeText={setTaskDescription}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Due Date, e.g. 2026-05-12"
+              placeholderTextColor={brownColor}
+              value={dueDate}
+              onChangeText={setDueDate}
+            />
+
+            <TaskCategoryComponent
+              label="Task difficulty"
+              selectedValue={selectedDifficulty}
+              options={difficultyOptions}
+              onSelectValue={setSelectedDifficulty}
+              placeholder="No difficulty chosen"
+              allowEmpty={true}
+            />
+
+            <TouchableOpacity style={styles.createButton} onPress={onCreateTask}>
+              <Text style={styles.buttonText}>Add Task</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.filterRow}>
+            {filterOptions.map((filter) => (
               <TouchableOpacity
-                key={cat}
+                key={filter}
                 style={[
-                  styles.categoryButton,
-                  selectedCategory === cat && styles.selectedCategory,
+                  styles.filterButton,
+                  filterOption === filter && styles.selectedFilterButton,
                 ]}
-                onPress={() => setSelectedCategory(cat)}
+                onPress={() => onFilterChange(filter)}
               >
-                <Text style={styles.categoryText}>{cat}</Text>
+                <Text style={styles.filterText}>{filter}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <TouchableOpacity style={styles.createButton} onPress={onCreateTask}>
-            <Text style={styles.buttonText}>Add Task</Text>
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.row}>
-          <TouchableOpacity onPress={() => onFilterChange('All')}>
-            <Text style={styles.filterText}>All</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onFilterChange('Completed')}>
-            <Text style={styles.filterText}>Completed</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onFilterChange('Pending')}>
-            <Text style={styles.filterText}>Pending</Text>
-          </TouchableOpacity>
-        </View>
+          <FlatList
+            data={displayedTaskList}
+            keyExtractor={(item) => item.TaskID.toString()}
+            renderItem={renderTask}
+            scrollEnabled={false}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No tasks to show.</Text>
+            }
+          />
 
-      
-        <FlatList
-          data={displayTasks()}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.taskCard}>
-              <Text style={[
-                styles.taskTitle,
-                item.completed && styles.completedTask
-              ]}>
-                {item.title}
-              </Text>
+          <Text style={styles.status}>{showStatusMessage()}</Text>
+        </ScrollView>
 
-              <Text style={styles.taskInfo}>{item.category} | {item.dueDate}</Text>
-
-              <View style={styles.row}>
-                <TouchableOpacity onPress={() => onMarkComplete(item.id)}>
-                  <Text style={styles.actionText}>✓</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => onDeleteTask(item.id)}>
-                  <Text style={styles.actionText}>🗑</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        />
-        <Text style={styles.status}>{showStatusMessage()}</Text>
-  {/* ------------------------------------------------------------------------------ */}
         <View style={styles.navBar}>
-          <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Home")}>
+          <TouchableOpacity style={styles.navButton} onPress={goToHome}>
             <Text style={styles.navText}>Home</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={styles.navButton}>
             <Text style={styles.navText}>Tasks</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navButton}>
+
+          <TouchableOpacity style={styles.navButton} onPress={goToStats}>
             <Text style={styles.navText}>Stats</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navButton}>
+
+          <TouchableOpacity style={styles.navButton} onPress={goToAppBlock}>
             <Text style={styles.navText}>App Blocking</Text>
           </TouchableOpacity>
         </View>
-    </View>
+      </View>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-
   background: {
     flex: 1,
   },
 
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     paddingTop: 20,
     paddingLeft: 20,
     paddingRight: 20,
-    paddingBottom: 0,
+  },
+
+  content: {
+    flex: 1,
+  },
+
+  contentScroll: {
+    paddingBottom: 120,
   },
 
   heading: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: brownColor,
     marginBottom: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
+    alignSelf: "center",
+  },
+
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: brownColor,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+
+  energyCard: {
+    backgroundColor: color1,
+    padding: 15,
+    borderRadius: 19,
+    marginBottom: 15,
+  },
+
+  energyText: {
+    color: brownColor,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+
+  clearEnergyButton: {
+    backgroundColor: inputBoxColor,
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+
+  clearEnergyText: {
+    color: brownColor,
+    fontWeight: "bold",
   },
 
   inputCard: {
@@ -237,49 +310,40 @@ const styles = StyleSheet.create({
     color: color3,
   },
 
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 10,
-  },
-
-  categoryButton: {
-    padding: 8,
-    borderRadius: 10,
-    backgroundColor: color4,
-  },
-
-  selectedCategory: {
-    backgroundColor: color6,
-  },
-
-  categoryText: {
-    color: brownColor,
-  },
-
   createButton: {
     backgroundColor: color1,
     padding: 12,
     borderRadius: 15,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   buttonText: {
     color: brownColor,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+  },
+
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 12,
+  },
+
+  filterButton: {
+    backgroundColor: color6,
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+
+  selectedFilterButton: {
+    backgroundColor: color1,
+    borderWidth: 1,
+    borderColor: brownColor,
   },
 
   filterText: {
-    backgroundColor: color6,
     color: color4,
-    fontWeight: '600',
-
-    borderRadius: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
-    paddingLeft: 20,
-    paddingRight: 20,
-    borderBlockColor: color3,
+    fontWeight: "700",
   },
 
   taskCard: {
@@ -291,51 +355,86 @@ const styles = StyleSheet.create({
 
   taskTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#6e3a4b',
+    fontWeight: "bold",
+    color: "#6e3a4b",
   },
 
   completedTask: {
-    textDecorationLine: 'line-through',
-    color: '#aaa',
+    textDecorationLine: "line-through",
+    color: "#888",
   },
+
+  taskDescription: {
+    fontSize: 13,
+    color: brownColor,
+    marginTop: 5,
+  },
+
   taskInfo: {
     fontSize: 12,
     color: brownColor,
-    marginVertical: 5,
+    marginVertical: 6,
   },
+
+  taskActionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+
+  smallActionButton: {
+    backgroundColor: inputBoxColor,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  },
+
+  deleteButton: {
+    backgroundColor: color1,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  },
+
   actionText: {
-    fontSize: 18,
-    marginHorizontal: 10,
+    color: brownColor,
+    fontWeight: "bold",
   },
+
+  emptyText: {
+    color: brownColor,
+    textAlign: "center",
+    fontWeight: "700",
+    marginTop: 15,
+  },
+
   status: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 10,
     color: brownColor,
+    fontWeight: "700",
   },
 
   navBar: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     backgroundColor: color3,
     paddingVertical: 20,
-
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
 
   navButton: {
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   navText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: brownColor,
   },
 });

@@ -56,6 +56,26 @@ async function createTables(database) {
       UpdatedAt TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS Tasks (
+      TaskID INTEGER PRIMARY KEY AUTOINCREMENT,
+      TaskTitle TEXT NOT NULL,
+      TaskDescription TEXT,
+      DifficultyLevel TEXT,
+      DueDate TEXT,
+      IsCompleted INTEGER NOT NULL DEFAULT 0,
+      ManualOrder INTEGER NOT NULL DEFAULT 0,
+      CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      UpdatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      CompletedAt TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS DailyEnergy (
+      EnergyID INTEGER PRIMARY KEY CHECK (EnergyID = 1),
+      EnergyLevel TEXT,
+      EnergyDate TEXT,
+      UpdatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
     INSERT OR IGNORE INTO TimerModeSettings (
       SettingID,
       TimerMode,
@@ -71,6 +91,9 @@ async function createTables(database) {
 
     INSERT OR IGNORE INTO Streaks (StreakID, CurrentStreak, LastStudyDate)
     VALUES (1, 0, NULL);
+
+    INSERT OR IGNORE INTO DailyEnergy (EnergyID, EnergyLevel, EnergyDate)
+    VALUES (1, NULL, NULL);
   `);
 }
 
