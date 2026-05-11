@@ -1,7 +1,4 @@
-// AppInternals/repository/AppBlockRepo.js
-// SQLite repository for Studify app blocking.
-
-import * as SQLite from "expo-sqlite";
+import { getStudifyDatabase } from "../Repos/StudifyDatabase";
 
 class AppBlockRepo {
   constructor() {
@@ -16,43 +13,21 @@ class AppBlockRepo {
 
   // Creates/opens the local SQLite database on the user's device.
   // This should run when the App Blocking page first opens.
-  async init() {
+    async init() {
     try {
-      if (this.db) {
+        this.db = await getStudifyDatabase();
+
+        await this.getBlockedApps();
+        await this.getBlockingState();
+
         this.repositoryStatus = "ready";
         return true;
-      }
-
-      this.db = await SQLite.openDatabaseAsync("studify.db");
-
-      await this.db.execAsync(`
-        PRAGMA journal_mode = WAL;
-
-        CREATE TABLE IF NOT EXISTS BlockedApps (
-          PackageName TEXT PRIMARY KEY NOT NULL,
-          CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS AppBlockState (
-          StateID INTEGER PRIMARY KEY CHECK (StateID = 1),
-          IsBlocking INTEGER NOT NULL DEFAULT 0
-        );
-
-        INSERT OR IGNORE INTO AppBlockState (StateID, IsBlocking)
-        VALUES (1, 0);
-      `);
-
-      await this.getBlockedApps();
-      await this.getBlockingState();
-
-      this.repositoryStatus = "ready";
-      return true;
     } catch (error) {
-      this.repositoryStatus = "error";
-      console.log("AppBlockRepo init error:", error);
-      return false;
+        this.repositoryStatus = "error";
+        console.log("AppBlockRepo init error:", error);
+        return false;
     }
-  }
+    }
 
   async ensureReady() {
     if (!this.db) {

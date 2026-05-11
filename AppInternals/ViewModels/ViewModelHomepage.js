@@ -1,5 +1,3 @@
-// AppInternals/ViewModels/ViewModelHomePage.js
-
 import { useEffect, useState } from "react";
 
 import LogicTimer from "../Logic/LogicTimer";

@@ -1,6 +1,4 @@
-// AppInternals/Repository/TimerRepo.js
-
-import * as SQLite from "expo-sqlite";
+import { getStudifyDatabase } from "../Repos/StudifyDatabase";
 
 class TimerRepo {
   constructor() {
@@ -14,66 +12,21 @@ class TimerRepo {
     this.repositoryStatus = "not initialized";
   }
 
-  async init() {
+ async init() {
     try {
-      this.db = await SQLite.openDatabaseAsync("studify.db");
+        this.db = await getStudifyDatabase();
 
-      await this.db.execAsync(`
-        PRAGMA journal_mode = WAL;
+        this.repositoryStatus = "ready";
+        await this.getActiveSession();
+        await this.getSessionHistory();
 
-        CREATE TABLE IF NOT EXISTS TimerModeSettings (
-          SettingID INTEGER PRIMARY KEY CHECK (SettingID = 1),
-          TimerMode TEXT NOT NULL,
-          CustomDurationMinutes REAL NOT NULL DEFAULT 25,
-          PomodoroWorkIntervalMinutes REAL NOT NULL DEFAULT 25,
-          PomodoroBreakIntervalMinutes REAL NOT NULL DEFAULT 5,
-          PomodoroIntervalCount INTEGER NOT NULL DEFAULT 1,
-          UpdatedAt TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS TimerDailyStart (
-          SessionDate TEXT PRIMARY KEY NOT NULL,
-          FirstStartTime TEXT NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS TimerSessions (
-          SessionID INTEGER PRIMARY KEY AUTOINCREMENT,
-          TimerMode TEXT NOT NULL,
-          StartTime TEXT NOT NULL,
-          EndTime TEXT,
-          DurationSeconds INTEGER NOT NULL DEFAULT 0,
-          CustomDurationMinutes REAL,
-          PomodoroWorkIntervalMinutes REAL,
-          PomodoroBreakIntervalMinutes REAL,
-          PomodoroIntervalCount INTEGER,
-          TimerState TEXT,
-          IsActive INTEGER NOT NULL DEFAULT 0,
-          FirstStartOfDay TEXT,
-          CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-
-        INSERT OR IGNORE INTO TimerModeSettings (
-          SettingID,
-          TimerMode,
-          CustomDurationMinutes,
-          PomodoroWorkIntervalMinutes,
-          PomodoroBreakIntervalMinutes,
-          PomodoroIntervalCount
-        )
-        VALUES (1, 'Pomodoro', 25, 25, 5, 1);
-      `);
-
-      this.repositoryStatus = "ready";
-      await this.getActiveSession();
-      await this.getSessionHistory();
-
-      return true;
+        return true;
     } catch (error) {
-      this.repositoryStatus = "error";
-      console.log("TimerRepo init error:", error);
-      return false;
+        this.repositoryStatus = "error";
+        console.log("TimerRepo init error:", error);
+        return false;
     }
-  }
+    }
 
   async ensureReady() {
     if (!this.db) {

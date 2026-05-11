@@ -1,5 +1,3 @@
-// AppInternals/Components/TimerModeSelectionComponent.js
-
 import React from "react";
 import {
   View,

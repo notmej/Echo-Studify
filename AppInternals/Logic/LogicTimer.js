@@ -1,5 +1,3 @@
-// AppInternals/Logic/LogicTimer.js
-
 const availableModes = [
   {
     modeID: 1,
