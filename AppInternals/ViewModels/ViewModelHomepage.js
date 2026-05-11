@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import LogicTimer from "../Logic/LogicTimer";
 import TimerRepo from "../Repos/TimerRepo";
 import AppBlockRepo from "../Repos/AppBlockRepo";
+import AppBlockBridge from "../NativeComponents/AppBlockBridge";
+import AppBlockLogic from "../Logic/AppBlockLogic";
 
 export default function ViewModelHomePage(navigation) {
   const [selectedTimerMode, setSelectedTimerMode] = useState("Pomodoro");
@@ -19,6 +21,9 @@ export default function ViewModelHomePage(navigation) {
   const [todayStreakDisplay, setTodayStreakDisplay] = useState(0);
 
   const [selectedBlockedApps, setSelectedBlockedApps] = useState([]);
+  const [availableApps, setAvailableApps] = useState([]);
+  const [blockingState, setBlockingState] = useState(false);
+
   const [statusMessage, setStatusMessage] = useState("Loading Studify data...");
   const [isDatabaseReady, setIsDatabaseReady] = useState(false);
   const [modeSelectionVisible, setModeSelectionVisible] = useState(false);
@@ -26,6 +31,10 @@ export default function ViewModelHomePage(navigation) {
   const timerStateRef = useRef(null);
   const sessionAlreadySavedRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
+
+  const availableAppsRef = useRef([]);
+  const lastBlockingShouldRunRef = useRef(null);
+  const isChangingBlockingRef = useRef(false);
 
   const [modeSelection, setModeSelection] = useState({
     selectedMode: {
@@ -46,6 +55,10 @@ export default function ViewModelHomePage(navigation) {
   useEffect(() => {
     timerStateRef.current = timerState;
   }, [timerState]);
+
+  useEffect(() => {
+    availableAppsRef.current = availableApps;
+  }, [availableApps]);
 
   useEffect(() => {
     const appStateSubscription = AppState.addEventListener(
@@ -105,6 +118,169 @@ export default function ViewModelHomePage(navigation) {
     setTimerPhaseLabel(LogicTimer.getPhaseLabel(previewState));
   }
 
+  function buildAppsFromSavedPackages(packageNames, installedApps) {
+    return packageNames.map((packageName) => {
+      const matchingApp = installedApps.find(
+        (app) => app.packageName === packageName
+      );
+
+      if (matchingApp) {
+        return matchingApp;
+      }
+
+      return {
+        appName: packageName,
+        packageName: packageName,
+      };
+    });
+  }
+
+  async function loadInstalledApps() {
+    const result = await AppBlockBridge.getInstalledAppsFromNative();
+
+    if (result.nativeResponse && result.nativeResponse.length > 0) {
+      setAvailableApps(result.nativeResponse);
+      availableAppsRef.current = result.nativeResponse;
+      return result.nativeResponse;
+    }
+
+    setAvailableApps([]);
+    availableAppsRef.current = [];
+    return [];
+  }
+
+  async function refreshBlockedAppsDisplay() {
+    const blockedApps = await AppBlockRepo.getBlockedApps();
+    setSelectedBlockedApps(blockedApps);
+    return blockedApps;
+  }
+
+  function shouldBlockAppsForTimerState(state) {
+    if (!state || state.isRunning !== true) {
+      return false;
+    }
+
+    if (state.isCompleted === true || state.wasStoppedManually === true) {
+      return false;
+    }
+
+    if (state.modeName === "Pomodoro") {
+      return state.pomodoroPhase === "Work";
+    }
+
+    if (state.modeName === "Timer" || state.modeName === "Stopwatch") {
+      return true;
+    }
+
+    return false;
+  }
+
+  async function startBlocking() {
+    try {
+      const savedPackageNames = await AppBlockRepo.getBlockedApps();
+
+      if (savedPackageNames.length === 0) {
+        await AppBlockRepo.setBlockingState(false);
+        setBlockingState(false);
+        console.log("HomePage startBlocking skipped: no saved blocked apps.");
+        return false;
+      }
+
+      const appsToBlock = buildAppsFromSavedPackages(
+        savedPackageNames,
+        availableAppsRef.current
+      );
+
+      const preparedResult = AppBlockLogic.prepareBlockList(appsToBlock);
+
+      if (preparedResult.blockList.length === 0) {
+        await AppBlockRepo.setBlockingState(false);
+        setBlockingState(false);
+        console.log("HomePage startBlocking skipped:", preparedResult.logicStatusMessage);
+        return false;
+      }
+
+      const syncResult = await AppBlockBridge.syncBlockedApps(
+        preparedResult.blockList
+      );
+
+      if (!syncResult.nativeResponse) {
+        console.log("HomePage syncBlockedApps failed:", syncResult.bridgeStatusMessage);
+        return false;
+      }
+
+      const startResult = await AppBlockBridge.startNativeBlocking();
+
+      if (startResult.nativeResponse) {
+        setBlockingState(startResult.nativeResponse.nativeBlockingState);
+
+        await AppBlockRepo.setBlockingState(
+          startResult.nativeResponse.nativeBlockingState
+        );
+      }
+
+      setSelectedBlockedApps(savedPackageNames);
+      console.log("HomePage startBlocking:", startResult.bridgeStatusMessage);
+      return true;
+    } catch (error) {
+      console.log("HomePage startBlocking error:", error);
+      return false;
+    }
+  }
+
+  async function stopBlocking() {
+    try {
+      const result = await AppBlockBridge.stopNativeBlocking();
+
+      if (result.nativeResponse) {
+        setBlockingState(result.nativeResponse.nativeBlockingState);
+
+        await AppBlockRepo.setBlockingState(
+          result.nativeResponse.nativeBlockingState
+        );
+      } else {
+        setBlockingState(false);
+        await AppBlockRepo.setBlockingState(false);
+      }
+
+      console.log("HomePage stopBlocking:", result.bridgeStatusMessage);
+      return true;
+    } catch (error) {
+      console.log("HomePage stopBlocking error:", error);
+      setBlockingState(false);
+      await AppBlockRepo.setBlockingState(false);
+      return false;
+    }
+  }
+
+  async function applyBlockingForTimerState(state) {
+    const shouldBlock = shouldBlockAppsForTimerState(state);
+
+    if (lastBlockingShouldRunRef.current === shouldBlock) {
+      return;
+    }
+
+    if (isChangingBlockingRef.current) {
+      return;
+    }
+
+    isChangingBlockingRef.current = true;
+
+    try {
+      if (shouldBlock) {
+        await startBlocking();
+      } else {
+        await stopBlocking();
+      }
+
+      lastBlockingShouldRunRef.current = shouldBlock;
+    } catch (error) {
+      console.log("applyBlockingForTimerState error:", error);
+    } finally {
+      isChangingBlockingRef.current = false;
+    }
+  }
+
   async function handleAppStateChange(nextAppState) {
     const previousAppState = appStateRef.current;
     appStateRef.current = nextAppState;
@@ -138,6 +314,8 @@ export default function ViewModelHomePage(navigation) {
 
     setTimerPhaseLabel(LogicTimer.getPhaseLabel(nextTimerState));
 
+    await applyBlockingForTimerState(nextTimerState);
+
     if (
       LogicTimer.shouldSaveSession(nextTimerState) &&
       sessionAlreadySavedRef.current === false
@@ -148,6 +326,8 @@ export default function ViewModelHomePage(navigation) {
       setStatusMessage("Session completed and saved.");
 
       await TimerRepo.stopSession(nextTimerState);
+      await stopBlocking();
+      lastBlockingShouldRunRef.current = false;
       await refreshSessionCount();
 
       return;
@@ -165,6 +345,8 @@ export default function ViewModelHomePage(navigation) {
 
       await TimerRepo.init();
       await AppBlockRepo.init();
+
+      await loadInstalledApps();
 
       const savedModeSelection = await TimerRepo.getModeSelection();
 
@@ -237,6 +419,8 @@ export default function ViewModelHomePage(navigation) {
               );
 
               await TimerRepo.stopSession(updatedRestoredTimerState);
+              await stopBlocking();
+              lastBlockingShouldRunRef.current = false;
               await refreshSessionCount();
 
               setStatusMessage("Session completed and saved.");
@@ -261,12 +445,20 @@ export default function ViewModelHomePage(navigation) {
                 LogicTimer.getPhaseLabel(updatedRestoredTimerState)
               );
 
+              await applyBlockingForTimerState(updatedRestoredTimerState);
+
               setStatusMessage("Active session restored.");
             }
+          } else {
+            await stopBlocking();
+            lastBlockingShouldRunRef.current = false;
           }
         } catch (error) {
           console.log("Restore active timer error:", error);
         }
+      } else {
+        await stopBlocking();
+        lastBlockingShouldRunRef.current = false;
       }
 
       await refreshSessionCount();
@@ -294,11 +486,6 @@ export default function ViewModelHomePage(navigation) {
     } else {
       setTodayStreakDisplay(0);
     }
-  }
-
-  async function refreshBlockedAppsDisplay() {
-    const blockedApps = await AppBlockRepo.getBlockedApps();
-    setSelectedBlockedApps(blockedApps);
   }
 
   function onDurationInputChange(valueInMinutes) {
@@ -451,6 +638,7 @@ export default function ViewModelHomePage(navigation) {
     setTimerPhaseLabel(LogicTimer.getPhaseLabel(initialTimerState));
     setIsTimerRunning(true);
 
+    await applyBlockingForTimerState(initialTimerState);
     await TimerRepo.startSession(normalizedSelection, initialTimerState);
 
     setStatusMessage("Study session started.");
@@ -474,6 +662,9 @@ export default function ViewModelHomePage(navigation) {
     setStatusMessage(
       "Session stopped. It was not saved because the timer did not finish."
     );
+
+    await stopBlocking();
+    lastBlockingShouldRunRef.current = false;
 
     await TimerRepo.clearActiveSession();
     await refreshSessionCount();
@@ -533,6 +724,8 @@ export default function ViewModelHomePage(navigation) {
     currentSessionCountDisplay,
     todayStreakDisplay,
     selectedBlockedApps,
+    availableApps,
+    blockingState,
     statusMessage,
     isDatabaseReady,
 
@@ -569,5 +762,9 @@ export default function ViewModelHomePage(navigation) {
     saveModeSelection,
     displayAvailableModes: LogicTimer.displayAvailableModes,
     resetModeSettings,
+
+    startBlocking,
+    stopBlocking,
+    applyBlockingForTimerState,
   };
 }

@@ -41,19 +41,11 @@ function formatSeconds(totalSeconds) {
 
   if (hours > 0) {
     return (
-      String(hours).padStart(2, "0") +
-      ":" +
-      String(minutes).padStart(2, "0") +
-      ":" +
-      String(seconds).padStart(2, "0")
-    );
+      String(hours).padStart(2, "0") + ":" + String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0"));
   }
 
   return (
-    String(minutes).padStart(2, "0") +
-    ":" +
-    String(seconds).padStart(2, "0")
-  );
+    String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0"));
 }
 
 function toPositiveNumber(value, fallbackValue) {
@@ -129,9 +121,7 @@ function validateModeSelection(modeSelection) {
 
   if (
     modeName === "Pomodoro" &&
-    (normalizedSelection.customDuration <= 0 ||
-      normalizedSelection.pomodoroWorkInterval <= 0 ||
-      normalizedSelection.pomodoroBreakInterval <= 0)
+    (normalizedSelection.customDuration <= 0 || normalizedSelection.pomodoroWorkInterval <= 0 || normalizedSelection.pomodoroBreakInterval <= 0)
   ) {
     return {
       isValid: false,
@@ -157,13 +147,9 @@ function createInitialTimerState(modeSelection) {
     normalizedSelection.customDuration * 60
   );
 
-  const workIntervalSeconds = Math.round(
-    normalizedSelection.pomodoroWorkInterval * 60
-  );
+  const workIntervalSeconds = Math.round( normalizedSelection.pomodoroWorkInterval * 60);
 
-  const breakIntervalSeconds = Math.round(
-    normalizedSelection.pomodoroBreakInterval * 60
-  );
+  const breakIntervalSeconds = Math.round(normalizedSelection.pomodoroBreakInterval * 60);
 
   if (modeName === "Stopwatch") {
     return {

@@ -12,6 +12,12 @@
 // 11. Open the blocked app
 // 12. Studify should reopen after around 1 second
 
+
+
+// start timer ==> must call startBlocking
+// stop timer--> must call stopBlocking
+
+
 import React, { useState } from "react";
 import {
   View,
@@ -89,9 +95,10 @@ export default function ViewAppBlock() {
 
       <View style={styles.container}>
         <Text style={styles.permissionText}>
-          Permission Status: {permissionStatus ? "Granted" : "Not Granted"}
+          Accessibility permission status: {permissionStatus ? "granted" : "not granted"}
         </Text>
 
+        {/* Messages for testing */}
         <Text style={styles.permissionText}>
           Blocking State: {blockingState ? "Active" : "Inactive"}
         </Text>
@@ -165,39 +172,40 @@ export default function ViewAppBlock() {
 
         <Text style={styles.sectionTitle}>Selected Apps: {selectedApps.length}</Text>
 
-        <ScrollView
+        {/* <ScrollView
           style={styles.container2}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-        >
+        > */}
           <TouchableOpacity style={styles.saveButton} onPress={saveBlockedApps}>
             <Text style={styles.saveButtonText}>Save Blocked Apps</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.saveButton} onPress={startBlocking}>
+          {/* <TouchableOpacity style={styles.saveButton} onPress={startBlocking}>
             <Text style={styles.saveButtonText}>Start Blocking</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          <TouchableOpacity style={styles.stopButton} onPress={stopBlocking}>
+          {/* <TouchableOpacity style={styles.stopButton} onPress={stopBlocking}>
             <Text style={styles.buttonText}>Stop Blocking</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity style={styles.stopButton} onPress={clearBlockedApps}>
             <Text style={styles.buttonText}>Clear Blocked Apps</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.refreshButton} onPress={monitorForegroundApp}>
+          {/* <TouchableOpacity style={styles.refreshButton} onPress={monitorForegroundApp}>
             <Text style={styles.saveButtonText}>Test Foreground App</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          <TouchableOpacity style={styles.refreshButton} onPress={refreshDisplay}>
+          {/* <TouchableOpacity style={styles.refreshButton} onPress={refreshDisplay}>
             <Text style={styles.saveButtonText}>Refresh Display</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          {statusMessage !== "" && (
+            {/* MESSAGE FOR TESTING  */}
+          {/* {statusMessage !== "" && (
             <Text style={styles.statusMessage}>{statusMessage}</Text>
-          )}
-        </ScrollView>
+          )} */}
+        {/* </ScrollView> */}
       </View>
     </ImageBackground>
   );
@@ -215,13 +223,13 @@ const styles = StyleSheet.create({
   },
 
   container2: {
-    height: 1100,
+    height: 200,
     backgroundColor: "white",
   },
 
   container3: {
-    height: 110,
-    backgroundColor: "white",
+    height: 200,
+    backgroundColor: "transparent",
   },
 
   scrollContent: {
