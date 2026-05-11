@@ -12,7 +12,7 @@ const availableModes = [
   {
     modeID: 3,
     modeName: "Stopwatch",
-    description: "Count upward until you stop the session.",
+    description: "Count upward until the selected duration is reached.",
   },
 ];
 
@@ -33,7 +33,7 @@ function getModeName(mode) {
 }
 
 function formatSeconds(totalSeconds) {
-  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
 
   const hours = Math.floor(safeSeconds / 3600);
   const minutes = Math.floor((safeSeconds % 3600) / 60);
@@ -49,7 +49,11 @@ function formatSeconds(totalSeconds) {
     );
   }
 
-  return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+  return (
+    String(minutes).padStart(2, "0") +
+    ":" +
+    String(seconds).padStart(2, "0")
+  );
 }
 
 function toPositiveNumber(value, fallbackValue) {
@@ -73,10 +77,12 @@ function normalizeModeSelection(modeSelection) {
   const modeName = getModeName(modeSelection?.selectedMode || modeSelection);
 
   const customDuration = toPositiveNumber(modeSelection?.customDuration, 25);
+
   const pomodoroWorkInterval = toPositiveNumber(
     modeSelection?.pomodoroWorkInterval,
     25
   );
+
   const pomodoroBreakInterval = toPositiveNumber(
     modeSelection?.pomodoroBreakInterval,
     5
@@ -84,10 +90,13 @@ function normalizeModeSelection(modeSelection) {
 
   return {
     selectedMode:
-      availableModes.find((mode) => mode.modeName === modeName) || availableModes[0],
+      availableModes.find((mode) => mode.modeName === modeName) ||
+      availableModes[0],
+
     customDuration,
     pomodoroWorkInterval,
     pomodoroBreakInterval,
+
     pomodoroIntervalCount: calculatePomodoroIntervalCount(
       customDuration,
       pomodoroWorkInterval
@@ -107,11 +116,14 @@ function validateModeSelection(modeSelection) {
     };
   }
 
-  if (modeName === "Timer" && normalizedSelection.customDuration <= 0) {
+  if (
+    (modeName === "Timer" || modeName === "Stopwatch") &&
+    normalizedSelection.customDuration <= 0
+  ) {
     return {
       isValid: false,
       normalizedSelection,
-      logicStatusMessage: "Please enter a valid timer duration.",
+      logicStatusMessage: "Please enter a valid duration.",
     };
   }
 
@@ -139,10 +151,16 @@ function createInitialTimerState(modeSelection) {
   const normalizedSelection = normalizeModeSelection(modeSelection);
   const modeName = normalizedSelection.selectedMode.modeName;
 
-  const totalDurationSeconds = Math.round(normalizedSelection.customDuration * 60);
+  const now = new Date().toISOString();
+
+  const totalDurationSeconds = Math.round(
+    normalizedSelection.customDuration * 60
+  );
+
   const workIntervalSeconds = Math.round(
     normalizedSelection.pomodoroWorkInterval * 60
   );
+
   const breakIntervalSeconds = Math.round(
     normalizedSelection.pomodoroBreakInterval * 60
   );
@@ -152,16 +170,20 @@ function createInitialTimerState(modeSelection) {
       modeName,
       isRunning: true,
       isCompleted: false,
-      remainingSeconds: 0,
+      wasStoppedManually: false,
+
+      remainingSeconds: totalDurationSeconds,
       elapsedSeconds: 0,
-      totalDurationSeconds: 0,
+      totalDurationSeconds,
+
       pomodoroPhase: "Stopwatch",
       currentPomodoroInterval: 0,
       completedWorkSeconds: 0,
       workIntervalSeconds: 0,
       breakIntervalSeconds: 0,
-      startedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+
+      startedAt: now,
+      updatedAt: now,
     };
   }
 
@@ -170,16 +192,20 @@ function createInitialTimerState(modeSelection) {
       modeName,
       isRunning: true,
       isCompleted: false,
+      wasStoppedManually: false,
+
       remainingSeconds: Math.min(workIntervalSeconds, totalDurationSeconds),
       elapsedSeconds: 0,
       totalDurationSeconds,
+
       pomodoroPhase: "Work",
       currentPomodoroInterval: 1,
       completedWorkSeconds: 0,
       workIntervalSeconds,
       breakIntervalSeconds,
-      startedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+
+      startedAt: now,
+      updatedAt: now,
     };
   }
 
@@ -187,116 +213,180 @@ function createInitialTimerState(modeSelection) {
     modeName: "Timer",
     isRunning: true,
     isCompleted: false,
+    wasStoppedManually: false,
+
     remainingSeconds: totalDurationSeconds,
     elapsedSeconds: 0,
     totalDurationSeconds,
+
     pomodoroPhase: "Timer",
     currentPomodoroInterval: 0,
     completedWorkSeconds: 0,
     workIntervalSeconds: 0,
     breakIntervalSeconds: 0,
-    startedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+
+    startedAt: now,
+    updatedAt: now,
   };
 }
 
-function getNextTimerTick(timerState) {
-  if (!timerState || timerState.isCompleted) {
+function getElapsedWallSeconds(timerState, nowDateObject) {
+  if (!timerState?.startedAt) {
+    return Number(timerState?.elapsedSeconds) || 0;
+  }
+
+  const startMilliseconds = new Date(timerState.startedAt).getTime();
+  const nowMilliseconds = nowDateObject.getTime();
+
+  if (Number.isNaN(startMilliseconds) || Number.isNaN(nowMilliseconds)) {
+    return Number(timerState?.elapsedSeconds) || 0;
+  }
+
+  return Math.max(0, Math.floor((nowMilliseconds - startMilliseconds) / 1000));
+}
+
+function getTimerStateFromClock(timerState, nowDateObject = new Date()) {
+  if (!timerState || timerState.wasStoppedManually || timerState.isCompleted) {
     return timerState;
   }
 
+  const elapsedWallSeconds = getElapsedWallSeconds(timerState, nowDateObject);
+  const updatedAt = nowDateObject.toISOString();
+
   if (timerState.modeName === "Stopwatch") {
+    const elapsedSeconds = Math.min(
+      elapsedWallSeconds,
+      timerState.totalDurationSeconds
+    );
+
+    const remainingSeconds = Math.max(
+      0,
+      timerState.totalDurationSeconds - elapsedWallSeconds
+    );
+
     return {
       ...timerState,
-      elapsedSeconds: timerState.elapsedSeconds + 1,
-      updatedAt: new Date().toISOString(),
+      elapsedSeconds,
+      remainingSeconds,
+      isRunning: remainingSeconds !== 0,
+      isCompleted: remainingSeconds === 0,
+      wasStoppedManually: false,
+      updatedAt,
     };
   }
 
   if (timerState.modeName === "Timer") {
-    const nextRemainingSeconds = Math.max(0, timerState.remainingSeconds - 1);
-    const nextElapsedSeconds = timerState.elapsedSeconds + 1;
+    const remainingSeconds = Math.max(
+      0,
+      timerState.totalDurationSeconds - elapsedWallSeconds
+    );
 
     return {
       ...timerState,
-      remainingSeconds: nextRemainingSeconds,
-      elapsedSeconds: nextElapsedSeconds,
-      isCompleted: nextRemainingSeconds === 0,
-      isRunning: nextRemainingSeconds !== 0,
-      updatedAt: new Date().toISOString(),
+      elapsedSeconds: Math.min(
+        elapsedWallSeconds,
+        timerState.totalDurationSeconds
+      ),
+      remainingSeconds,
+      isCompleted: remainingSeconds === 0,
+      isRunning: remainingSeconds !== 0,
+      wasStoppedManually: false,
+      updatedAt,
     };
   }
 
   if (timerState.modeName === "Pomodoro") {
-    if (timerState.pomodoroPhase === "Work") {
-      const nextRemainingSeconds = Math.max(0, timerState.remainingSeconds - 1);
-      const nextCompletedWorkSeconds = timerState.completedWorkSeconds + 1;
-      const nextElapsedSeconds = timerState.elapsedSeconds + 1;
+    let wallSecondsLeft = elapsedWallSeconds;
+    let completedWorkSeconds = 0;
+    let currentPomodoroInterval = 1;
+    let pomodoroPhase = "Work";
+    let remainingSeconds = timerState.workIntervalSeconds;
 
-      if (nextCompletedWorkSeconds >= timerState.totalDurationSeconds) {
+    while (completedWorkSeconds < timerState.totalDurationSeconds) {
+      const remainingWorkTotal =
+        timerState.totalDurationSeconds - completedWorkSeconds;
+
+      const thisWorkInterval = Math.min(
+        timerState.workIntervalSeconds,
+        remainingWorkTotal
+      );
+
+      if (wallSecondsLeft < thisWorkInterval) {
+        pomodoroPhase = "Work";
+        remainingSeconds = thisWorkInterval - wallSecondsLeft;
+        completedWorkSeconds += wallSecondsLeft;
+
+        return {
+          ...timerState,
+          remainingSeconds,
+          elapsedSeconds: elapsedWallSeconds,
+          completedWorkSeconds,
+          pomodoroPhase,
+          currentPomodoroInterval,
+          isCompleted: false,
+          isRunning: true,
+          wasStoppedManually: false,
+          updatedAt,
+        };
+      }
+
+      wallSecondsLeft -= thisWorkInterval;
+      completedWorkSeconds += thisWorkInterval;
+
+      if (completedWorkSeconds >= timerState.totalDurationSeconds) {
         return {
           ...timerState,
           remainingSeconds: 0,
-          elapsedSeconds: nextElapsedSeconds,
-          completedWorkSeconds: nextCompletedWorkSeconds,
+          elapsedSeconds: elapsedWallSeconds,
+          completedWorkSeconds,
+          pomodoroPhase: "Work",
+          currentPomodoroInterval,
           isCompleted: true,
           isRunning: false,
-          updatedAt: new Date().toISOString(),
+          wasStoppedManually: false,
+          updatedAt,
         };
       }
 
-      if (nextRemainingSeconds === 0) {
+      if (wallSecondsLeft < timerState.breakIntervalSeconds) {
+        pomodoroPhase = "Break";
+        remainingSeconds = timerState.breakIntervalSeconds - wallSecondsLeft;
+
         return {
           ...timerState,
-          remainingSeconds: timerState.breakIntervalSeconds,
-          elapsedSeconds: nextElapsedSeconds,
-          completedWorkSeconds: nextCompletedWorkSeconds,
-          pomodoroPhase: "Break",
-          updatedAt: new Date().toISOString(),
+          remainingSeconds,
+          elapsedSeconds: elapsedWallSeconds,
+          completedWorkSeconds,
+          pomodoroPhase,
+          currentPomodoroInterval,
+          isCompleted: false,
+          isRunning: true,
+          wasStoppedManually: false,
+          updatedAt,
         };
       }
 
-      return {
-        ...timerState,
-        remainingSeconds: nextRemainingSeconds,
-        elapsedSeconds: nextElapsedSeconds,
-        completedWorkSeconds: nextCompletedWorkSeconds,
-        updatedAt: new Date().toISOString(),
-      };
-    }
-
-    const nextBreakRemainingSeconds = Math.max(
-      0,
-      timerState.remainingSeconds - 1
-    );
-    const nextElapsedSeconds = timerState.elapsedSeconds + 1;
-
-    if (nextBreakRemainingSeconds === 0) {
-      const remainingWorkSeconds =
-        timerState.totalDurationSeconds - timerState.completedWorkSeconds;
-
-      return {
-        ...timerState,
-        remainingSeconds: Math.min(
-          timerState.workIntervalSeconds,
-          remainingWorkSeconds
-        ),
-        elapsedSeconds: nextElapsedSeconds,
-        pomodoroPhase: "Work",
-        currentPomodoroInterval: timerState.currentPomodoroInterval + 1,
-        updatedAt: new Date().toISOString(),
-      };
+      wallSecondsLeft -= timerState.breakIntervalSeconds;
+      currentPomodoroInterval += 1;
     }
 
     return {
       ...timerState,
-      remainingSeconds: nextBreakRemainingSeconds,
-      elapsedSeconds: nextElapsedSeconds,
-      updatedAt: new Date().toISOString(),
+      remainingSeconds: 0,
+      elapsedSeconds: elapsedWallSeconds,
+      completedWorkSeconds: timerState.totalDurationSeconds,
+      isCompleted: true,
+      isRunning: false,
+      wasStoppedManually: false,
+      updatedAt,
     };
   }
 
   return timerState;
+}
+
+function getNextTimerTick(timerState) {
+  return getTimerStateFromClock(timerState, new Date());
 }
 
 function getDisplaySeconds(timerState) {
@@ -317,14 +407,35 @@ function getPhaseLabel(timerState) {
   }
 
   if (timerState.modeName === "Pomodoro") {
-    return (
-      timerState.pomodoroPhase +
-      " " +
-      timerState.currentPomodoroInterval
-    );
+    return timerState.pomodoroPhase + " " + timerState.currentPomodoroInterval;
   }
 
   return timerState.modeName;
+}
+
+function stopTimerManually(timerState) {
+  if (!timerState) {
+    return null;
+  }
+
+  return {
+    ...timerState,
+    isRunning: false,
+    isCompleted: false,
+    wasStoppedManually: true,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function shouldSaveSession(timerState) {
+  if (!timerState) {
+    return false;
+  }
+
+  return (
+    timerState.isCompleted === true &&
+    timerState.wasStoppedManually !== true
+  );
 }
 
 export default {
@@ -335,7 +446,11 @@ export default {
   normalizeModeSelection,
   validateModeSelection,
   createInitialTimerState,
+  getElapsedWallSeconds,
+  getTimerStateFromClock,
   getNextTimerTick,
   getDisplaySeconds,
   getPhaseLabel,
+  stopTimerManually,
+  shouldSaveSession,
 };

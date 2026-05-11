@@ -15,7 +15,6 @@ import TimerModeSelectionComponent from "../Components/TimerModeSelectionCompone
 
 const color1 = "#c49572";
 const color3 = "#876146";
-const color4 = "#a76c40";
 const color6 = "#f7d9b7";
 const brownColor = "#2a1902";
 const inputBoxColor = "#F3E4C9";
@@ -61,6 +60,7 @@ export default function ViewHomePage({ navigation }) {
         <View style={styles.topBar}>
           <Text style={styles.logoText}>Studify</Text>
           <Text style={styles.heading}>Home</Text>
+
           <TouchableOpacity style={styles.userIcon}>
             <Text style={styles.userIconText}>👤</Text>
           </TouchableOpacity>
@@ -71,7 +71,10 @@ export default function ViewHomePage({ navigation }) {
           contentContainerStyle={styles.contentScroll}
           showsVerticalScrollIndicator={false}
         >
-          <TouchableOpacity style={styles.optionButton} onPress={goToModeSelection}>
+          <TouchableOpacity
+            style={styles.optionButton}
+            onPress={goToModeSelection}
+          >
             <Text style={styles.optionLabel}>Timer Mode</Text>
             <Text style={styles.optionValue}>
               {selectedMode?.modeName || "No mode selected"}
@@ -101,7 +104,10 @@ export default function ViewHomePage({ navigation }) {
           </View>
 
           {!isTimerRunning ? (
-            <TouchableOpacity style={styles.startButton} onPress={onStartSession}>
+            <TouchableOpacity
+              style={styles.startButton}
+              onPress={onStartSession}
+            >
               <Text style={styles.buttonText}>Start</Text>
             </TouchableOpacity>
           ) : (
@@ -122,7 +128,10 @@ export default function ViewHomePage({ navigation }) {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.optionButton} onPress={goToAppBlockSelection}>
+          <TouchableOpacity
+            style={styles.optionButton}
+            onPress={goToAppBlockSelection}
+          >
             <Text style={styles.optionLabel}>Blocked Apps</Text>
             <Text style={styles.optionValue}>
               {selectedBlockedApps.length > 0
@@ -148,7 +157,10 @@ export default function ViewHomePage({ navigation }) {
             <Text style={styles.navText}>Tasks</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.navButton}>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => navigation.navigate("Stats")}
+          >
             <Text style={styles.navText}>Stats</Text>
           </TouchableOpacity>
 

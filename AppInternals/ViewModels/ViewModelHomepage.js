@@ -1,35 +1,61 @@
-import { useEffect, useState } from "react";
+import { AppState } from "react-native";
+import { useEffect, useRef, useState } from "react";
 
 import LogicTimer from "../Logic/LogicTimer";
 import TimerRepo from "../Repos/TimerRepo";
+import AppBlockRepo from "../Repos/AppBlockRepo";
 
 export default function ViewModelHomePage(navigation) {
-  const availableModes = LogicTimer.displayAvailableModes();
+  const [selectedTimerMode, setSelectedTimerMode] = useState("Pomodoro");
+  const [durationInput, setDurationInput] = useState("25");
 
-  const [selectedMode, setSelectedMode] = useState(availableModes[0]);
-  const [customDuration, setCustomDurationState] = useState("25");
-  const [pomodoroWorkInterval, setPomodoroWorkInterval] = useState("25");
-  const [pomodoroBreakInterval, setPomodoroBreakInterval] = useState("5");
-
-  const [timerState, setTimerState] = useState(
-    LogicTimer.createInitialTimerState({
-      selectedMode: availableModes[0],
-      customDuration: "25",
-      pomodoroWorkInterval: "25",
-      pomodoroBreakInterval: "5",
-    })
-  );
-
+  const [timerState, setTimerState] = useState(null);
   const [displayedTime, setDisplayedTime] = useState("25:00");
+  const [timerPhaseLabel, setTimerPhaseLabel] = useState("Pomodoro");
+
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [currentSessionCountDisplay, setCurrentSessionCountDisplay] = useState(0);
+  const [currentSessionCountDisplay, setCurrentSessionCountDisplay] =
+    useState(0);
   const [todayStreakDisplay, setTodayStreakDisplay] = useState(0);
+
   const [selectedBlockedApps, setSelectedBlockedApps] = useState([]);
-  const [statusMessage, setStatusMessage] = useState("Ready to focus");
+  const [statusMessage, setStatusMessage] = useState("Loading Studify data...");
+  const [isDatabaseReady, setIsDatabaseReady] = useState(false);
   const [modeSelectionVisible, setModeSelectionVisible] = useState(false);
+
+  const timerStateRef = useRef(null);
+  const sessionAlreadySavedRef = useRef(false);
+  const appStateRef = useRef(AppState.currentState);
+
+  const [modeSelection, setModeSelection] = useState({
+    selectedMode: {
+      modeID: 1,
+      modeName: "Pomodoro",
+      description: "Study using work intervals and short breaks.",
+    },
+    customDuration: 25,
+    pomodoroWorkInterval: 25,
+    pomodoroBreakInterval: 5,
+    pomodoroIntervalCount: 1,
+  });
 
   useEffect(() => {
     initializeHomePage();
+  }, []);
+
+  useEffect(() => {
+    timerStateRef.current = timerState;
+  }, [timerState]);
+
+  useEffect(() => {
+    const appStateSubscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
+
+    return () => {
+      appStateSubscription.remove();
+    };
   }, []);
 
   useEffect(() => {
@@ -37,254 +63,428 @@ export default function ViewModelHomePage(navigation) {
       return;
     }
 
-    const timerInterval = setInterval(() => {
-      setTimerState((previousTimerState) => {
-        const nextTimerState = LogicTimer.getNextTimerTick(previousTimerState);
-
-        setDisplayedTime(
-          LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(nextTimerState))
-        );
-
-        TimerRepo.updateTimerState(nextTimerState);
-
-        if (nextTimerState.isCompleted) {
-          setIsTimerRunning(false);
-          finishCompletedSession(nextTimerState);
-        }
-
-        return nextTimerState;
-      });
+    const intervalID = setInterval(() => {
+      updateTimerFromClock();
     }, 1000);
 
-    return () => clearInterval(timerInterval);
+    return () => clearInterval(intervalID);
   }, [isTimerRunning]);
 
-  async function initializeHomePage() {
-    await TimerRepo.init();
+  function createStoppedPreviewTimerState(selection) {
+    const previewState = LogicTimer.createInitialTimerState(selection);
 
-    const savedModeSelection = await TimerRepo.getModeSelection();
+    return {
+      ...previewState,
+      isRunning: false,
+      isCompleted: false,
+      wasStoppedManually: false,
+    };
+  }
 
-    if (savedModeSelection) {
-      const savedMode =
-        availableModes.find(
-          (mode) => mode.modeName === savedModeSelection.timerMode
-        ) || availableModes[0];
-
-      setSelectedMode(savedMode);
-      setCustomDurationState(String(savedModeSelection.customDuration));
-      setPomodoroWorkInterval(String(savedModeSelection.pomodoroWorkInterval));
-      setPomodoroBreakInterval(String(savedModeSelection.pomodoroBreakInterval));
-
-      const initialTimerState = LogicTimer.createInitialTimerState({
-        selectedMode: savedMode,
-        customDuration: String(savedModeSelection.customDuration),
-        pomodoroWorkInterval: String(savedModeSelection.pomodoroWorkInterval),
-        pomodoroBreakInterval: String(savedModeSelection.pomodoroBreakInterval),
-      });
-
-      setTimerState(initialTimerState);
-      setDisplayedTime(
-        LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(initialTimerState))
-      );
+  function setPreviewTimerDisplay(selection) {
+    if (isTimerRunning) {
+      return;
     }
 
-    const history = await TimerRepo.getSessionHistory();
-    setCurrentSessionCountDisplay(history.length);
-    setTodayStreakDisplay(calculateTodayStreak(history));
+    const durationNumber = Number(selection.customDuration);
+
+    if (Number.isNaN(durationNumber) || durationNumber <= 0) {
+      return;
+    }
+
+    const normalizedSelection = LogicTimer.normalizeModeSelection(selection);
+    const previewState = createStoppedPreviewTimerState(normalizedSelection);
+
+    timerStateRef.current = previewState;
+    setTimerState(previewState);
+
+    setDisplayedTime(
+      LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(previewState))
+    );
+
+    setTimerPhaseLabel(LogicTimer.getPhaseLabel(previewState));
+  }
+
+  async function handleAppStateChange(nextAppState) {
+    const previousAppState = appStateRef.current;
+    appStateRef.current = nextAppState;
+
+    if (
+      previousAppState.match(/inactive|background/) &&
+      nextAppState === "active"
+    ) {
+      await updateTimerFromClock();
+    }
+  }
+
+  async function updateTimerFromClock() {
+    const previousTimerState = timerStateRef.current;
+
+    if (!previousTimerState || previousTimerState.isRunning !== true) {
+      return;
+    }
+
+    const nextTimerState = LogicTimer.getTimerStateFromClock(
+      previousTimerState,
+      new Date()
+    );
+
+    timerStateRef.current = nextTimerState;
+    setTimerState(nextTimerState);
+
+    setDisplayedTime(
+      LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(nextTimerState))
+    );
+
+    setTimerPhaseLabel(LogicTimer.getPhaseLabel(nextTimerState));
+
+    if (
+      LogicTimer.shouldSaveSession(nextTimerState) &&
+      sessionAlreadySavedRef.current === false
+    ) {
+      sessionAlreadySavedRef.current = true;
+
+      setIsTimerRunning(false);
+      setStatusMessage("Session completed and saved.");
+
+      await TimerRepo.stopSession(nextTimerState);
+      await refreshSessionCount();
+
+      return;
+    }
+
+    if (!LogicTimer.shouldSaveSession(nextTimerState)) {
+      await TimerRepo.updateTimerState(nextTimerState);
+    }
+  }
+
+  async function initializeHomePage() {
+    try {
+      setIsDatabaseReady(false);
+      setStatusMessage("Loading Studify data...");
+
+      await TimerRepo.init();
+      await AppBlockRepo.init();
+
+      const savedModeSelection = await TimerRepo.getModeSelection();
+
+      if (savedModeSelection) {
+        const normalizedSelection =
+          LogicTimer.normalizeModeSelection(savedModeSelection);
+
+        setModeSelection(normalizedSelection);
+        setSelectedTimerMode(normalizedSelection.selectedMode.modeName);
+        setDurationInput(String(normalizedSelection.customDuration));
+
+        const previewState = createStoppedPreviewTimerState(normalizedSelection);
+
+        timerStateRef.current = previewState;
+        setTimerState(previewState);
+
+        setDisplayedTime(
+          LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(previewState))
+        );
+
+        setTimerPhaseLabel(LogicTimer.getPhaseLabel(previewState));
+      } else {
+        const previewState = createStoppedPreviewTimerState(modeSelection);
+
+        timerStateRef.current = previewState;
+        setTimerState(previewState);
+
+        setDisplayedTime(
+          LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(previewState))
+        );
+
+        setTimerPhaseLabel(LogicTimer.getPhaseLabel(previewState));
+      }
+
+      const activeSession = await TimerRepo.getActiveSession();
+
+      if (activeSession && activeSession.TimerState) {
+        try {
+          const restoredTimerState = JSON.parse(activeSession.TimerState);
+
+          if (
+            restoredTimerState &&
+            restoredTimerState.isRunning === true &&
+            restoredTimerState.wasStoppedManually !== true
+          ) {
+            const updatedRestoredTimerState = LogicTimer.getTimerStateFromClock(
+              restoredTimerState,
+              new Date()
+            );
+
+            if (
+              updatedRestoredTimerState &&
+              updatedRestoredTimerState.wasStoppedManually !== true &&
+              updatedRestoredTimerState.isCompleted === true
+            ) {
+              timerStateRef.current = updatedRestoredTimerState;
+              sessionAlreadySavedRef.current = true;
+
+              setTimerState(updatedRestoredTimerState);
+              setIsTimerRunning(false);
+
+              setDisplayedTime(
+                LogicTimer.formatSeconds(
+                  LogicTimer.getDisplaySeconds(updatedRestoredTimerState)
+                )
+              );
+
+              setTimerPhaseLabel(
+                LogicTimer.getPhaseLabel(updatedRestoredTimerState)
+              );
+
+              await TimerRepo.stopSession(updatedRestoredTimerState);
+              await refreshSessionCount();
+
+              setStatusMessage("Session completed and saved.");
+            } else if (
+              updatedRestoredTimerState &&
+              updatedRestoredTimerState.isRunning === true &&
+              updatedRestoredTimerState.wasStoppedManually !== true
+            ) {
+              timerStateRef.current = updatedRestoredTimerState;
+              sessionAlreadySavedRef.current = false;
+
+              setTimerState(updatedRestoredTimerState);
+              setIsTimerRunning(true);
+
+              setDisplayedTime(
+                LogicTimer.formatSeconds(
+                  LogicTimer.getDisplaySeconds(updatedRestoredTimerState)
+                )
+              );
+
+              setTimerPhaseLabel(
+                LogicTimer.getPhaseLabel(updatedRestoredTimerState)
+              );
+
+              setStatusMessage("Active session restored.");
+            }
+          }
+        } catch (error) {
+          console.log("Restore active timer error:", error);
+        }
+      }
+
+      await refreshSessionCount();
+      await refreshBlockedAppsDisplay();
+
+      setIsDatabaseReady(true);
+
+      if (!timerStateRef.current?.isRunning) {
+        setStatusMessage("Ready to focus.");
+      }
+    } catch (error) {
+      console.log("initializeHomePage error:", error);
+      setIsDatabaseReady(false);
+      setStatusMessage("Database failed to load.");
+    }
+  }
+
+  async function refreshSessionCount() {
+    const sessions = await TimerRepo.getSessionHistory();
+
+    setCurrentSessionCountDisplay(sessions.length);
+
+    if (sessions.length > 0) {
+      setTodayStreakDisplay(1);
+    } else {
+      setTodayStreakDisplay(0);
+    }
+  }
+
+  async function refreshBlockedAppsDisplay() {
+    const blockedApps = await AppBlockRepo.getBlockedApps();
+    setSelectedBlockedApps(blockedApps);
+  }
+
+  function onDurationInputChange(valueInMinutes) {
+    setDurationInput(String(valueInMinutes));
+
+    const updatedSelection = {
+      ...modeSelection,
+      customDuration: valueInMinutes,
+    };
+
+    setModeSelection(updatedSelection);
+    setPreviewTimerDisplay(updatedSelection);
   }
 
   function selectMode(mode) {
-    setSelectedMode(mode);
-
-    const resetTimerState = LogicTimer.createInitialTimerState({
+    const updatedSelection = {
+      ...modeSelection,
       selectedMode: mode,
-      customDuration,
-      pomodoroWorkInterval,
-      pomodoroBreakInterval,
-    });
+    };
 
-    setTimerState(resetTimerState);
-    setDisplayedTime(
-      LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(resetTimerState))
-    );
-
-    setStatusMessage(mode.modeName + " mode selected.");
+    setModeSelection(updatedSelection);
+    setSelectedTimerMode(mode.modeName);
+    setPreviewTimerDisplay(updatedSelection);
   }
 
-  function setCustomDuration(duration) {
-    setCustomDurationState(duration);
-
-    const resetTimerState = LogicTimer.createInitialTimerState({
-      selectedMode,
-      customDuration: duration,
-      pomodoroWorkInterval,
-      pomodoroBreakInterval,
-    });
-
-    setTimerState(resetTimerState);
-    setDisplayedTime(
-      LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(resetTimerState))
-    );
-
-    setStatusMessage("Duration updated.");
+  function setCustomDuration(valueInMinutes) {
+    onDurationInputChange(valueInMinutes);
   }
 
-  function setPomodoroIntervals(workInterval, breakInterval) {
-    setPomodoroWorkInterval(workInterval);
-    setPomodoroBreakInterval(breakInterval);
+  function setPomodoroIntervals(workIntervalInMinutes, breakIntervalInMinutes) {
+    const updatedSelection = {
+      ...modeSelection,
+      pomodoroWorkInterval: workIntervalInMinutes,
+      pomodoroBreakInterval: breakIntervalInMinutes,
+    };
 
-    const resetTimerState = LogicTimer.createInitialTimerState({
-      selectedMode,
-      customDuration,
-      pomodoroWorkInterval: workInterval,
-      pomodoroBreakInterval: breakInterval,
-    });
+    setModeSelection(updatedSelection);
 
-    setTimerState(resetTimerState);
+    const workNumber = Number(workIntervalInMinutes);
+    const breakNumber = Number(breakIntervalInMinutes);
+
+    if (
+      !Number.isNaN(workNumber) &&
+      workNumber > 0 &&
+      !Number.isNaN(breakNumber) &&
+      breakNumber > 0
+    ) {
+      setPreviewTimerDisplay(updatedSelection);
+    }
+  }
+
+  async function onModeSelectionSaved(newModeSelection) {
+    const validationResult = LogicTimer.validateModeSelection(newModeSelection);
+
+    if (!validationResult.isValid) {
+      setStatusMessage(validationResult.logicStatusMessage);
+      return false;
+    }
+
+    const normalizedSelection = validationResult.normalizedSelection;
+
+    setModeSelection(normalizedSelection);
+    setSelectedTimerMode(normalizedSelection.selectedMode.modeName);
+    setDurationInput(String(normalizedSelection.customDuration));
+
+    const previewState = createStoppedPreviewTimerState(normalizedSelection);
+
+    timerStateRef.current = previewState;
+    setTimerState(previewState);
+
     setDisplayedTime(
-      LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(resetTimerState))
+      LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(previewState))
     );
 
-    setStatusMessage("Pomodoro intervals updated.");
+    setTimerPhaseLabel(LogicTimer.getPhaseLabel(previewState));
+
+    const saved = await TimerRepo.saveModeSelection(normalizedSelection);
+
+    if (saved) {
+      setStatusMessage("Timer mode saved.");
+      setModeSelectionVisible(false);
+      return true;
+    }
+
+    setStatusMessage("Timer mode could not be saved.");
+    return false;
   }
 
   async function saveModeSelection() {
-    const validationResult = LogicTimer.validateModeSelection({
-      selectedMode,
-      customDuration,
-      pomodoroWorkInterval,
-      pomodoroBreakInterval,
-    });
+    const validationResult = LogicTimer.validateModeSelection(modeSelection);
 
     if (!validationResult.isValid) {
       setStatusMessage(validationResult.logicStatusMessage);
-      return null;
+      return false;
     }
 
-    await TimerRepo.saveModeSelection(validationResult.normalizedSelection);
-
-    const resetTimerState = LogicTimer.createInitialTimerState(
-      validationResult.normalizedSelection
-    );
-
-    setTimerState(resetTimerState);
-    setDisplayedTime(
-      LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(resetTimerState))
-    );
-    setStatusMessage("Timer mode saved.");
-
-    return validationResult.normalizedSelection;
+    return await onModeSelectionSaved(validationResult.normalizedSelection);
   }
 
-  function displayAvailableModes() {
-    return availableModes;
-  }
+  function resetModeSettings() {
+    const resetSelection = {
+      selectedMode: {
+        modeID: 1,
+        modeName: "Pomodoro",
+        description: "Study using work intervals and short breaks.",
+      },
+      customDuration: 25,
+      pomodoroWorkInterval: 25,
+      pomodoroBreakInterval: 5,
+      pomodoroIntervalCount: 1,
+    };
 
-  async function resetModeSettings() {
-    const defaultMode = availableModes[0];
+    const normalizedSelection = LogicTimer.normalizeModeSelection(resetSelection);
 
-    setSelectedMode(defaultMode);
-    setCustomDurationState("25");
-    setPomodoroWorkInterval("25");
-    setPomodoroBreakInterval("5");
-
-    const defaultSelection = LogicTimer.normalizeModeSelection({
-      selectedMode: defaultMode,
-      customDuration: "25",
-      pomodoroWorkInterval: "25",
-      pomodoroBreakInterval: "5",
-    });
-
-    await TimerRepo.saveModeSelection(defaultSelection);
-
-    const resetTimerState = LogicTimer.createInitialTimerState(defaultSelection);
-    setTimerState(resetTimerState);
-    setDisplayedTime(
-      LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(resetTimerState))
-    );
-
-    setStatusMessage("Timer mode settings reset.");
+    setModeSelection(normalizedSelection);
+    setSelectedTimerMode(normalizedSelection.selectedMode.modeName);
+    setDurationInput(String(normalizedSelection.customDuration));
+    setPreviewTimerDisplay(normalizedSelection);
   }
 
   async function onStartSession() {
-    if (isTimerRunning) {
-      setStatusMessage("Timer is already running.");
+    if (!isDatabaseReady) {
+      setStatusMessage("Database is still loading.");
       return;
     }
 
-    const validationResult = LogicTimer.validateModeSelection({
-      selectedMode,
-      customDuration,
-      pomodoroWorkInterval,
-      pomodoroBreakInterval,
-    });
+    const validationResult = LogicTimer.validateModeSelection(modeSelection);
 
     if (!validationResult.isValid) {
       setStatusMessage(validationResult.logicStatusMessage);
       return;
     }
 
-    await TimerRepo.saveModeSelection(validationResult.normalizedSelection);
+    sessionAlreadySavedRef.current = false;
 
-    const initialTimerState = LogicTimer.createInitialTimerState(
-      validationResult.normalizedSelection
-    );
+    const normalizedSelection = validationResult.normalizedSelection;
 
-    const activeSession = await TimerRepo.startSession(
-      validationResult.normalizedSelection,
-      initialTimerState
-    );
+    const initialTimerState =
+      LogicTimer.createInitialTimerState(normalizedSelection);
 
-    if (!activeSession) {
-      setStatusMessage("Could not start study session.");
-      return;
-    }
+    setModeSelection(normalizedSelection);
 
+    timerStateRef.current = initialTimerState;
     setTimerState(initialTimerState);
+
     setDisplayedTime(
       LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(initialTimerState))
     );
+
+    setTimerPhaseLabel(LogicTimer.getPhaseLabel(initialTimerState));
     setIsTimerRunning(true);
+
+    await TimerRepo.startSession(normalizedSelection, initialTimerState);
+
     setStatusMessage("Study session started.");
   }
 
   async function onStopSession() {
-    if (!isTimerRunning) {
-      setStatusMessage("Timer is not running.");
-      return;
-    }
+    const stoppedState = LogicTimer.stopTimerManually(timerStateRef.current);
 
-    const stoppedTimerState = {
-      ...timerState,
-      isRunning: false,
-      isCompleted: false,
-      updatedAt: new Date().toISOString(),
-    };
+    timerStateRef.current = stoppedState;
+    sessionAlreadySavedRef.current = true;
 
+    setTimerState(stoppedState);
     setIsTimerRunning(false);
-    setTimerState(stoppedTimerState);
 
-    await TimerRepo.stopSession(stoppedTimerState);
+    setDisplayedTime(
+      LogicTimer.formatSeconds(LogicTimer.getDisplaySeconds(stoppedState))
+    );
 
-    const history = await TimerRepo.getSessionHistory();
-    setCurrentSessionCountDisplay(history.length);
-    setTodayStreakDisplay(calculateTodayStreak(history));
+    setTimerPhaseLabel(LogicTimer.getPhaseLabel(stoppedState));
 
-    setStatusMessage("Study session stopped.");
-  }
+    setStatusMessage(
+      "Session stopped. It was not saved because the timer did not finish."
+    );
 
-  async function finishCompletedSession(finalTimerState) {
-    await TimerRepo.stopSession(finalTimerState);
-
-    const history = await TimerRepo.getSessionHistory();
-    setCurrentSessionCountDisplay(history.length);
-    setTodayStreakDisplay(calculateTodayStreak(history));
-
-    setStatusMessage("Study session completed.");
+    await TimerRepo.clearActiveSession();
+    await refreshSessionCount();
   }
 
   function showTimer() {
     return displayedTime;
+  }
+
+  function showTimerPhase() {
+    return timerPhaseLabel;
   }
 
   function showSessionCount() {
@@ -299,60 +499,75 @@ export default function ViewModelHomePage(navigation) {
     return statusMessage;
   }
 
-  function showTimerPhase() {
-    return LogicTimer.getPhaseLabel(timerState);
-  }
-
   function goToModeSelection() {
     setModeSelectionVisible(!modeSelectionVisible);
+    setStatusMessage("Timer mode selection opened.");
   }
 
   function goToAppBlockSelection() {
-    navigation.navigate("AppBlock");
-    setStatusMessage("Navigate to blocked apps selection.");
+    if (navigation) {
+      navigation.navigate("AppBlock");
+    }
   }
 
-  function calculateTodayStreak(history) {
-    const today = new Date().toISOString().split("T")[0];
+  function getSelectedBlockedAppsText() {
+    if (!selectedBlockedApps || selectedBlockedApps.length === 0) {
+      return "No blocked apps selected";
+    }
 
-    const completedToday = history.some((session) => {
-      return session.StartTime && session.StartTime.startsWith(today);
-    });
-
-    return completedToday ? 1 : 0;
+    return selectedBlockedApps.join(", ");
   }
 
   return {
-    selectedMode,
-    availableModes,
-    customDuration,
-    pomodoroWorkInterval,
-    pomodoroBreakInterval,
-    statusMessage,
+    selectedTimerMode,
+    setSelectedTimerMode,
+
+    durationInput,
+    setDurationInput: onDurationInputChange,
 
     timerState,
     displayedTime,
+    timerPhaseLabel,
     isTimerRunning,
+
     currentSessionCountDisplay,
     todayStreakDisplay,
     selectedBlockedApps,
+    statusMessage,
+    isDatabaseReady,
+
+    modeSelection,
+    setModeSelection,
+
+    onModeSelectionSaved,
+    onStartSession,
+    onStopSession,
+
+    showTimer,
+    showTimerPhase,
+    showSessionCount,
+    showStreak,
+    showStatusMessage,
+    goToModeSelection,
+    goToAppBlockSelection,
+    getSelectedBlockedAppsText,
+
+    initializeHomePage,
+    refreshSessionCount,
+    refreshBlockedAppsDisplay,
+
+    selectedMode: modeSelection.selectedMode,
+    availableModes: LogicTimer.displayAvailableModes(),
+    customDuration: String(modeSelection.customDuration),
+    pomodoroWorkInterval: String(modeSelection.pomodoroWorkInterval),
+    pomodoroBreakInterval: String(modeSelection.pomodoroBreakInterval),
     modeSelectionVisible,
 
     selectMode,
     setCustomDuration,
     setPomodoroIntervals,
     saveModeSelection,
-    displayAvailableModes,
+    displayAvailableModes: LogicTimer.displayAvailableModes,
     resetModeSettings,
-
-    onStartSession,
-    onStopSession,
-    showTimer,
-    showSessionCount,
-    showStreak,
-    showStatusMessage,
-    showTimerPhase,
-    goToModeSelection,
-    goToAppBlockSelection,
   };
 }

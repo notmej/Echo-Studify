@@ -12,25 +12,29 @@ class TimerRepo {
     this.repositoryStatus = "not initialized";
   }
 
- async init() {
+  async init() {
     try {
-        this.db = await getStudifyDatabase();
+      this.db = await getStudifyDatabase();
 
-        this.repositoryStatus = "ready";
-        await this.getActiveSession();
-        await this.getSessionHistory();
+      this.repositoryStatus = "ready";
+      await this.getActiveSession();
+      await this.getSessionHistory();
 
-        return true;
+      return true;
     } catch (error) {
-        this.repositoryStatus = "error";
-        console.log("TimerRepo init error:", error);
-        return false;
+      this.repositoryStatus = "error";
+      console.log("TimerRepo init error:", error);
+      return false;
     }
-    }
+  }
 
   async ensureReady() {
     if (!this.db) {
       await this.init();
+    }
+
+    if (!this.db) {
+      throw new Error("TimerRepo database is not ready.");
     }
   }
 
@@ -57,7 +61,9 @@ class TimerRepo {
         `
         INSERT INTO TimerDailyStart (SessionDate, FirstStartTime)
         VALUES (?, ?);
-        `,sessionDate, now.toISOString()
+        `,
+        sessionDate,
+        now.toISOString()
       );
 
       dailyStartRow = {
@@ -70,37 +76,37 @@ class TimerRepo {
 
   async saveModeSelection(modeSelection) {
     try {
-        await this.ensureReady();
+      await this.ensureReady();
 
-        if (!modeSelection) {
+      if (!modeSelection) {
         throw new Error("No mode selection was provided.");
-        }
+      }
 
-        const selectedMode = modeSelection.selectedMode;
+      const selectedMode = modeSelection.selectedMode;
 
-        const timerMode =
+      const timerMode =
         typeof selectedMode === "string"
-            ? selectedMode
-            : selectedMode?.modeName || "Pomodoro";
+          ? selectedMode
+          : selectedMode?.modeName || "Pomodoro";
 
-        const customDuration = Number(modeSelection.customDuration) || 25;
-        const pomodoroWorkInterval =
+      const customDuration = Number(modeSelection.customDuration) || 20;
+      const pomodoroWorkInterval =
         Number(modeSelection.pomodoroWorkInterval) || 25;
-        const pomodoroBreakInterval =
+      const pomodoroBreakInterval =
         Number(modeSelection.pomodoroBreakInterval) || 5;
-        const pomodoroIntervalCount =
+      const pomodoroIntervalCount =
         Number(modeSelection.pomodoroIntervalCount) || 1;
 
-        await this.db.runAsync(
+      await this.db.runAsync(
         `
         INSERT OR REPLACE INTO TimerModeSettings (
-            SettingID,
-            TimerMode,
-            CustomDurationMinutes,
-            PomodoroWorkIntervalMinutes,
-            PomodoroBreakIntervalMinutes,
-            PomodoroIntervalCount,
-            UpdatedAt
+          SettingID,
+          TimerMode,
+          CustomDurationMinutes,
+          PomodoroWorkIntervalMinutes,
+          PomodoroBreakIntervalMinutes,
+          PomodoroIntervalCount,
+          UpdatedAt
         )
         VALUES (1, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
         `,
@@ -109,14 +115,14 @@ class TimerRepo {
         pomodoroWorkInterval,
         pomodoroBreakInterval,
         pomodoroIntervalCount
-        );
+      );
 
-        return true;
+      return true;
     } catch (error) {
-        console.log("TimerRepo saveModeSelection error:", error);
-        return false;
+      console.log("TimerRepo saveModeSelection error:", error);
+      return false;
     }
-    }
+  }
 
   async getModeSelection() {
     try {
@@ -138,7 +144,7 @@ class TimerRepo {
       }
 
       return {
-        timerMode: row.TimerMode,
+        selectedMode: row.TimerMode,
         customDuration: String(row.CustomDurationMinutes),
         pomodoroWorkInterval: String(row.PomodoroWorkIntervalMinutes),
         pomodoroBreakInterval: String(row.PomodoroBreakIntervalMinutes),
@@ -152,22 +158,22 @@ class TimerRepo {
 
   async saveSession(session) {
     try {
-        await this.ensureReady();
+      await this.ensureReady();
 
-        const result = await this.db.runAsync(
+      const result = await this.db.runAsync(
         `
         INSERT INTO TimerSessions (
-            TimerMode,
-            StartTime,
-            EndTime,
-            DurationSeconds,
-            CustomDurationMinutes,
-            PomodoroWorkIntervalMinutes,
-            PomodoroBreakIntervalMinutes,
-            PomodoroIntervalCount,
-            TimerState,
-            IsActive,
-            FirstStartOfDay
+          TimerMode,
+          StartTime,
+          EndTime,
+          DurationSeconds,
+          CustomDurationMinutes,
+          PomodoroWorkIntervalMinutes,
+          PomodoroBreakIntervalMinutes,
+          PomodoroIntervalCount,
+          TimerState,
+          IsActive,
+          FirstStartOfDay
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `,
@@ -182,16 +188,16 @@ class TimerRepo {
         JSON.stringify(session.timerState || {}),
         session.isActive ? 1 : 0,
         session.firstStartOfDay || null
-        );
+      );
 
-        await this.getSessionHistory();
+      await this.getSessionHistory();
 
-        return result.lastInsertRowId;
+      return result.lastInsertRowId;
     } catch (error) {
-        console.log("TimerRepo saveSession error:", error);
-        return null;
+      console.log("TimerRepo saveSession error:", error);
+      return null;
     }
-    }
+  }
 
   async startSession(modeSelection, initialTimerState) {
     try {
@@ -202,12 +208,15 @@ class TimerRepo {
       const now = new Date();
       const firstStartOfDay = await this.getFirstStartOfDay(now);
       const selectedMode = modeSelection.selectedMode;
+
       const timerMode =
-        typeof selectedMode === "string" ? selectedMode : selectedMode.modeName;
+        typeof selectedMode === "string"
+          ? selectedMode
+          : selectedMode?.modeName || "Pomodoro";
 
       const newSession = {
         timerMode,
-        startTime: now.toISOString(),
+        startTime: initialTimerState?.startedAt || now.toISOString(),
         endTime: null,
         durationSeconds: 0,
         customDuration: Number(modeSelection.customDuration) || 0,
@@ -242,6 +251,15 @@ class TimerRepo {
     try {
       await this.ensureReady();
 
+      if (
+        !finalTimerState ||
+        finalTimerState.isCompleted !== true ||
+        finalTimerState.wasStoppedManually === true
+      ) {
+        await this.clearActiveSession();
+        return false;
+      }
+
       const activeSession = await this.getActiveSession();
 
       if (!activeSession) {
@@ -249,6 +267,7 @@ class TimerRepo {
       }
 
       const now = new Date();
+
       const durationSeconds =
         finalTimerState?.elapsedSeconds ??
         Math.floor(
@@ -265,16 +284,16 @@ class TimerRepo {
           IsActive = 0
         WHERE SessionID = ?;
         `,
-          now.toISOString(),
-          Number(durationSeconds) || 0,
-          JSON.stringify(finalTimerState || {}),
-          activeSession.SessionID,
+        now.toISOString(),
+        Number(durationSeconds) || 0,
+        JSON.stringify(finalTimerState || {}),
+        activeSession.SessionID
       );
 
       this.endTime = now.toISOString();
       this.timerState = finalTimerState || null;
       this.activeSession = null;
-      this.repositoryStatus = "active session stopped";
+      this.repositoryStatus = "active session completed";
 
       await this.getSessionHistory();
 
@@ -304,9 +323,9 @@ class TimerRepo {
           DurationSeconds = ?
         WHERE SessionID = ?;
         `,
-          JSON.stringify(timerState || {}),
-          Number(timerState?.elapsedSeconds) || 0,
-          activeSession.SessionID,
+        JSON.stringify(timerState || {}),
+        Number(timerState?.elapsedSeconds) || 0,
+        activeSession.SessionID
       );
 
       this.timerState = timerState;
@@ -373,13 +392,14 @@ class TimerRepo {
       await this.ensureReady();
 
       await this.db.runAsync(`
-        UPDATE TimerSessions
-        SET IsActive = 0
+        DELETE FROM TimerSessions
         WHERE IsActive = 1;
       `);
 
       this.activeSession = null;
       this.timerState = null;
+
+      await this.getSessionHistory();
 
       return true;
     } catch (error) {
