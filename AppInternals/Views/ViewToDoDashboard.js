@@ -42,7 +42,6 @@ export default function ViewToDoDashboard({ navigation }) {
     onCreateTask,
     onDeleteTask,
     onMarkComplete,
-    // onMoveTask,
     onFilterChange,
     onDailyEnergyChange,
     onClearDailyEnergy,
@@ -78,20 +77,6 @@ export default function ViewToDoDashboard({ navigation }) {
           >
             <Text style={styles.actionText}>{isCompleted ? "Undo" : "Done"}</Text>
           </TouchableOpacity>
-
-          {/* <TouchableOpacity
-            style={styles.smallActionButton}
-            onPress={() => onMoveTask(item.TaskID, "up")}
-          >
-            <Text style={styles.actionText}>↑</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.smallActionButton}
-            onPress={() => onMoveTask(item.TaskID, "down")}
-          >
-            <Text style={styles.actionText}>↓</Text>
-          </TouchableOpacity> */}
 
           <TouchableOpacity
             style={styles.deleteButton}

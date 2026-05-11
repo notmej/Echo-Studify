@@ -192,24 +192,6 @@ export default function ViewModelToDoDashboard(navigation) {
     }
   }
 
-//   async function onMoveTask(taskID, direction) {
-//     const databaseReady = await ensureDatabaseReady();
-
-//     if (!databaseReady) {
-//       setStatusMessage("Database is not ready.");
-//       return;
-//     }
-
-//     const wasMoved = await ToDoRepo.moveTask(taskID, direction);
-//     await reloadTasks();
-
-//     if (wasMoved) {
-//       setStatusMessage("Task order updated.");
-//     } else {
-//       setStatusMessage("Task could not move further " + direction + ".");
-//     }
-//   }
-
   function onFilterChange(filter) {
     setFilterOption(filter);
 
@@ -310,7 +292,6 @@ export default function ViewModelToDoDashboard(navigation) {
     onCreateTask,
     onDeleteTask,
     onMarkComplete,
-    // onMoveTask,
     onFilterChange,
     onDailyEnergyChange,
     onClearDailyEnergy,
