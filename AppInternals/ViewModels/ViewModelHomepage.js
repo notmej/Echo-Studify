@@ -99,13 +99,16 @@ export default function ViewModelHomePage(navigation) {
       return;
     }
 
-    const durationNumber = Number(selection.customDuration);
+    const normalizedSelection = LogicTimer.normalizeModeSelection(selection);
+    const modeName = normalizedSelection.selectedMode.modeName;
+    const durationNumber = Number(normalizedSelection.customDuration);
 
-    if (Number.isNaN(durationNumber) || durationNumber <= 0) {
+    if (modeName !== "Stopwatch" &&
+      (Number.isNaN(durationNumber) || durationNumber <= 0)
+    ) {
       return;
     }
 
-    const normalizedSelection = LogicTimer.normalizeModeSelection(selection);
     const previewState = createStoppedPreviewTimerState(normalizedSelection);
 
     timerStateRef.current = previewState;
@@ -659,14 +662,26 @@ export default function ViewModelHomePage(navigation) {
 
     setTimerPhaseLabel(LogicTimer.getPhaseLabel(stoppedState));
 
-    setStatusMessage(
-      "Session stopped. It was not saved because the timer did not finish."
-    );
-
     await stopBlocking();
     lastBlockingShouldRunRef.current = false;
 
-    await TimerRepo.clearActiveSession();
+    if (LogicTimer.shouldSaveSession(stoppedState)) {
+      await TimerRepo.stopSession(stoppedState);
+      setStatusMessage("Stopwatch session saved. Great focus session!");
+    } else {
+      await TimerRepo.clearActiveSession();
+
+      if (stoppedState?.modeName === "Stopwatch") {
+        setStatusMessage(
+          "Stopwatch stopped. Sessions under 10 minutes do not increase sessions or streak."
+        );
+      } else {
+        setStatusMessage(
+          "Session stopped. It was not saved because the timer did not finish."
+        );
+      }
+    }
+
     await refreshSessionCount();
   }
 

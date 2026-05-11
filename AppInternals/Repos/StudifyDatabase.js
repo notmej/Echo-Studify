@@ -34,6 +34,7 @@ async function createTables(database) {
       PomodoroIntervalCount INTEGER,
       TimerState TEXT,
       IsActive INTEGER NOT NULL DEFAULT 0,
+      SessionCountsTowardStreak INTEGER NOT NULL DEFAULT 0,
       FirstStartOfDay TEXT,
       CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -95,6 +96,21 @@ async function createTables(database) {
     INSERT OR IGNORE INTO DailyEnergy (EnergyID, EnergyLevel, EnergyDate)
     VALUES (1, NULL, NULL);
   `);
+
+  const timerSessionColumns = await database.getAllAsync(`
+    PRAGMA table_info(TimerSessions);
+  `);
+
+  const hasSessionCountsTowardStreak = timerSessionColumns.some(
+    (column) => column.name === "SessionCountsTowardStreak"
+  );
+
+  if (!hasSessionCountsTowardStreak) {
+    await database.execAsync(`
+      ALTER TABLE TimerSessions
+      ADD COLUMN SessionCountsTowardStreak INTEGER NOT NULL DEFAULT 0;
+    `);
+  }
 }
 
 export async function getStudifyDatabase() {

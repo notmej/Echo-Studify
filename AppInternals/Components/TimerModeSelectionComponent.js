@@ -204,14 +204,11 @@ export default function TimerModeSelectionComponent({
       />
 
       {(selectedMode?.modeName === "Timer" ||
-        selectedMode?.modeName === "Pomodoro" ||
-        selectedMode?.modeName === "Stopwatch") && (
+        selectedMode?.modeName === "Pomodoro") && (
         <TimePickerRow
           label={
             selectedMode?.modeName === "Pomodoro"
               ? "Total Study Duration"
-              : selectedMode?.modeName === "Stopwatch"
-              ? "Stopwatch Duration"
               : "Timer Duration"
           }
           valueInMinutes={customDuration}
@@ -241,7 +238,7 @@ export default function TimerModeSelectionComponent({
 
       {selectedMode?.modeName === "Stopwatch" && (
         <Text style={styles.helpText}>
-          Stopwatch counts upward until the selected duration is reached.
+          Stopwatch counts upward indefinitely until you press Stop. Sessions under 10 minutes will not increase your session count or streak.
         </Text>
       )}
 

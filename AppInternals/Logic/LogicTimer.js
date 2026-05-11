@@ -12,9 +12,11 @@ const availableModes = [
   {
     modeID: 3,
     modeName: "Stopwatch",
-    description: "Count upward until the selected duration is reached.",
+    description: "Count upward until you manually stop it.",
   },
 ];
+
+const MIN_STOPWATCH_SESSION_SECONDS = 10 * 60;
 
 function displayAvailableModes() {
   return availableModes;
@@ -108,14 +110,11 @@ function validateModeSelection(modeSelection) {
     };
   }
 
-  if (
-    (modeName === "Timer" || modeName === "Stopwatch") &&
-    normalizedSelection.customDuration <= 0
-  ) {
+  if (modeName === "Timer" && normalizedSelection.customDuration <= 0) {
     return {
       isValid: false,
       normalizedSelection,
-      logicStatusMessage: "Please enter a valid duration.",
+      logicStatusMessage: "Please enter a valid timer duration.",
     };
   }
 
@@ -158,9 +157,9 @@ function createInitialTimerState(modeSelection) {
       isCompleted: false,
       wasStoppedManually: false,
 
-      remainingSeconds: totalDurationSeconds,
+      remainingSeconds: 0,
       elapsedSeconds: 0,
-      totalDurationSeconds,
+      totalDurationSeconds: 0,
 
       pomodoroPhase: "Stopwatch",
       currentPomodoroInterval: 0,
@@ -240,22 +239,13 @@ function getTimerStateFromClock(timerState, nowDateObject = new Date()) {
   const updatedAt = nowDateObject.toISOString();
 
   if (timerState.modeName === "Stopwatch") {
-    const elapsedSeconds = Math.min(
-      elapsedWallSeconds,
-      timerState.totalDurationSeconds
-    );
-
-    const remainingSeconds = Math.max(
-      0,
-      timerState.totalDurationSeconds - elapsedWallSeconds
-    );
-
     return {
       ...timerState,
-      elapsedSeconds,
-      remainingSeconds,
-      isRunning: remainingSeconds !== 0,
-      isCompleted: remainingSeconds === 0,
+      elapsedSeconds: elapsedWallSeconds,
+      remainingSeconds: 0,
+      totalDurationSeconds: 0,
+      isRunning: true,
+      isCompleted: false,
       wasStoppedManually: false,
       updatedAt,
     };
@@ -404,18 +394,36 @@ function stopTimerManually(timerState) {
     return null;
   }
 
+  const nowDateObject = new Date();
+  const latestTimerState = getTimerStateFromClock(timerState, nowDateObject);
+
   return {
-    ...timerState,
+    ...latestTimerState,
     isRunning: false,
-    isCompleted: false,
+    isCompleted: latestTimerState?.modeName === "Stopwatch" ? false : latestTimerState?.isCompleted === true,
     wasStoppedManually: true,
-    updatedAt: new Date().toISOString(),
+    updatedAt: nowDateObject.toISOString(),
   };
+}
+
+function isStopwatchSessionLongEnough(timerState) {
+  return (
+    timerState?.modeName === "Stopwatch" &&
+    Number(timerState.elapsedSeconds) >= MIN_STOPWATCH_SESSION_SECONDS
+  );
 }
 
 function shouldSaveSession(timerState) {
   if (!timerState) {
     return false;
+  }
+
+  if (timerState.modeName === "Stopwatch") {
+    return (
+      timerState.isRunning === false &&
+      timerState.wasStoppedManually === true &&
+      isStopwatchSessionLongEnough(timerState)
+    );
   }
 
   return (
@@ -438,5 +446,7 @@ export default {
   getDisplaySeconds,
   getPhaseLabel,
   stopTimerManually,
+  isStopwatchSessionLongEnough,
   shouldSaveSession,
+  MIN_STOPWATCH_SESSION_SECONDS,
 };

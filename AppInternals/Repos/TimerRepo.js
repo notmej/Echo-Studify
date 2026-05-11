@@ -1,5 +1,7 @@
 import { getStudifyDatabase } from "../Repos/StudifyDatabase";
 
+const MIN_STOPWATCH_SESSION_SECONDS = 10 * 60;
+
 class TimerRepo {
   constructor() {
     this.db = null;
@@ -40,6 +42,39 @@ class TimerRepo {
 
   getDateOnly(dateObject) {
     return dateObject.toISOString().split("T")[0];
+  }
+
+  getSessionDurationSeconds(finalTimerState, activeSession, now) {
+    const elapsedSeconds = Number(finalTimerState?.elapsedSeconds);
+
+    if (!Number.isNaN(elapsedSeconds) && elapsedSeconds >= 0) {
+      return Math.floor(elapsedSeconds);
+    }
+
+    return Math.max(
+      0,
+      Math.floor(
+        (now.getTime() - new Date(activeSession.StartTime).getTime()) / 1000
+      )
+    );
+  }
+
+  shouldFinalStateCountAsStudySession(finalTimerState, durationSeconds) {
+    if (!finalTimerState) {
+      return false;
+    }
+
+    if (finalTimerState.modeName === "Stopwatch") {
+      return (
+        finalTimerState.wasStoppedManually === true &&
+        Number(durationSeconds) >= MIN_STOPWATCH_SESSION_SECONDS
+      );
+    }
+
+    return (
+      finalTimerState.isCompleted === true &&
+      finalTimerState.wasStoppedManually !== true
+    );
   }
 
   async getFirstStartOfDay(now) {
@@ -173,9 +208,10 @@ class TimerRepo {
           PomodoroIntervalCount,
           TimerState,
           IsActive,
+          SessionCountsTowardStreak,
           FirstStartOfDay
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `,
         session.timerMode,
         session.startTime,
@@ -187,6 +223,7 @@ class TimerRepo {
         Number(session.pomodoroIntervalCount) || 0,
         JSON.stringify(session.timerState || {}),
         session.isActive ? 1 : 0,
+        session.sessionCountsTowardStreak ? 1 : 0,
         session.firstStartOfDay || null
       );
 
@@ -225,6 +262,7 @@ class TimerRepo {
         pomodoroIntervalCount: Number(modeSelection.pomodoroIntervalCount) || 0,
         timerState: initialTimerState,
         isActive: true,
+        sessionCountsTowardStreak: false,
         firstStartOfDay,
       };
 
@@ -251,15 +289,6 @@ class TimerRepo {
     try {
       await this.ensureReady();
 
-      if (
-        !finalTimerState ||
-        finalTimerState.isCompleted !== true ||
-        finalTimerState.wasStoppedManually === true
-      ) {
-        await this.clearActiveSession();
-        return false;
-      }
-
       const activeSession = await this.getActiveSession();
 
       if (!activeSession) {
@@ -267,12 +296,19 @@ class TimerRepo {
       }
 
       const now = new Date();
+      const durationSeconds = this.getSessionDurationSeconds(
+        finalTimerState,
+        activeSession,
+        now
+      );
 
-      const durationSeconds =
-        finalTimerState?.elapsedSeconds ??
-        Math.floor(
-          (now.getTime() - new Date(activeSession.StartTime).getTime()) / 1000
-        );
+      const shouldCountAsStudySession =
+        this.shouldFinalStateCountAsStudySession(finalTimerState, durationSeconds);
+
+      if (!shouldCountAsStudySession) {
+        await this.clearActiveSession();
+        return false;
+      }
 
       await this.db.runAsync(
         `
@@ -281,7 +317,8 @@ class TimerRepo {
           EndTime = ?,
           DurationSeconds = ?,
           TimerState = ?,
-          IsActive = 0
+          IsActive = 0,
+          SessionCountsTowardStreak = 1
         WHERE SessionID = ?;
         `,
         now.toISOString(),
@@ -376,6 +413,7 @@ class TimerRepo {
         SELECT *
         FROM TimerSessions
         WHERE IsActive = 0
+          AND SessionCountsTowardStreak = 1
         ORDER BY StartTime DESC;
       `);
 
