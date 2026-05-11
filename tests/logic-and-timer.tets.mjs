@@ -20,15 +20,14 @@ test("Stopwatch starts at 0 and has no selected end duration", () => {
     customDuration: 999,
   });
 
-  assert.equal( state.modeName,"Stopwatch");
-  assert.equal(state.isRunning, true);
+  assert.equal( state.modeName, "Stopwatch");
+  assert.equal(state.isRunning,true);
   assert.equal( state.isCompleted,false);
-  assert.equal (state.elapsedSeconds,0);
-  assert.equal(state.remainingSeconds,0);
-  assert.equal(state.totalDurationSeconds,0);
-});
+  assert.equal (state.elapsedSeconds, 0);
+  assert.equal( state.remainingSeconds,0);
+  assert.equal( state.totalDurationSeconds,0);});
 
-test("Stopwatch keeps running indefinitely instead of auto-completing", () => {
+test("stopwatch keeps running indefinitely instead of auto-completing", () => {
   const startDate = new Date("2026-05-11T10:00:00.000Z");
   const twoHoursLater = new Date("2026-05-11T12:00:00.000Z");
 

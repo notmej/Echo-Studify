@@ -1,21 +1,17 @@
-// Usage before implementation
-// 1. Open App Blocking page
-// 2. SQLite database is created locally on first opening of this page
-// 3. Open Permission Settings
-// 4. Enable Usage Access for Studify
-// 5. Go back to Studify
-// 6. Press Check Permissions
-// 7. Select YouTube or another app
-// 8. Press Save Blocked Apps
-// 9. Press Start Blocking
-// 10. Leave Studify
-// 11. Open the blocked app
-// 12. Studify should reopen after around 1 second
+// usage before implementation
+// 1. open app blocking page
+// 2. sqlite database is created locally on first opening of this page
+// 3. open permission settings
+// 4. enable usage access for studify
+// 5. go back to studify
+// 6. press check permissions
+// 7. select youtube or another app
+// 8. press save blocked apps
+// 9. press start blocking
+// 10. leave studify
+// 11. open the blocked app
+// 12. studify should reopen after around 1 second
 
-
-
-// start timer ==> must call startBlocking
-// stop timer--> must call stopBlocking
 
 
 import React, { useState } from "react";
@@ -95,17 +91,17 @@ export default function ViewAppBlock() {
 
       <View style={styles.container}>
         <Text style={styles.permissionText}>
-          Accessibility permission status: {permissionStatus ? "granted" : "not granted"}
+          accessibility permission status: {permissionStatus ? "given" : "not given"}
         </Text>
-
+        
         {/* Messages for testing */}
-        <Text style={styles.permissionText}>
+        {/* <Text style={styles.permissionText}>
           Blocking State: {blockingState ? "Active" : "Inactive"}
         </Text>
 
         <Text style={styles.permissionText}>
           Saved Packages in SQLite: {savedPackagesCount}
-        </Text>
+        </Text> */}
 
         <ScrollView
           style={styles.container3}
@@ -224,7 +220,7 @@ const styles = StyleSheet.create({
 
   container2: {
     height: 200,
-    backgroundColor: "white",
+    backgroundColor: "transparent",
   },
 
   container3: {
@@ -249,20 +245,22 @@ const styles = StyleSheet.create({
 
   permissionText: {
     fontSize: 15,
-    marginBottom: 10,
     color: brownColor,
     fontWeight: "600",
+    backgroundColor: "transparent",
+    padding: 6,
+    overflow: "hidden",
   },
 
   searchInput: {
     borderWidth: 1,
-    borderColor: brownColor,
+    borderColor: color1,
     borderRadius: 10,
     padding: 12,
-    marginTop: 10,
-    marginBottom: 20,
+    marginBottom: 10,
     backgroundColor: inputBoxColor,
     color: brownColor,
+    fontWeight: "600",
   },
 
   sectionTitle: {
@@ -277,13 +275,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+
     paddingVertical: 12,
     paddingHorizontal: 10,
     margin: 5,
+
     borderWidth: 1,
-    borderColor: "black",
-    backgroundColor: color3,
+    borderColor: color1,
+    backgroundColor: inputBoxColor,
     borderRadius: 10,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    elevation: 2,
   },
 
   appTextContainer: {
@@ -294,7 +299,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 16,
     fontWeight: "600",
-    color: color6,
+    color: brownColor,
   },
 
   selectButton: {
@@ -304,11 +309,11 @@ const styles = StyleSheet.create({
   },
 
   addButton: {
-    backgroundColor: "#2f6439",
+    backgroundColor: color3,
   },
 
   deselectButton: {
-    backgroundColor: "#48160b",
+    backgroundColor: color1,
   },
 
   buttonText: {
@@ -325,11 +330,13 @@ const styles = StyleSheet.create({
   },
 
   refreshButton: {
-    backgroundColor: color4,
+    backgroundColor: inputBoxColor,
     padding: 14,
     borderRadius: 10,
     marginTop: 10,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: color1,
   },
 
   permissionButton: {
@@ -342,7 +349,7 @@ const styles = StyleSheet.create({
   },
 
   stopButton: {
-    backgroundColor: "#48160b",
+    backgroundColor: color3,
     padding: 14,
     borderRadius: 10,
     marginTop: 10,
@@ -355,11 +362,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
+  darkButtonText: {
+    color: color6,
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+
   statusMessage: {
     marginTop: 15,
     fontSize: 14,
     color: brownColor,
     textAlign: "center",
     fontWeight: "600",
+    backgroundColor: inputBoxColor,
+    padding: 12,
+    borderRadius: 14,
+    overflow: "hidden",
   },
 });
