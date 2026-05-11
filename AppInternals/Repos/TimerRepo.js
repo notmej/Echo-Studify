@@ -21,6 +21,7 @@ class TimerRepo {
       this.repositoryStatus = "ready";
       await this.getActiveSession();
       await this.getSessionHistory();
+      await this.refreshCurrentStreak();
 
       return true;
     } catch (error) {
@@ -41,7 +42,116 @@ class TimerRepo {
   }
 
   getDateOnly(dateObject) {
-    return dateObject.toISOString().split("T")[0];
+    const date = new Date(dateObject);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  getPreviousDateOnly(dateText) {
+    const [year, month, day] = String(dateText).split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
+    date.setDate(date.getDate() - 1);
+
+    return this.getDateOnly(date);
+  }
+
+  getSessionStudyDate(session) {
+    if (session.EndTime) {
+      return this.getDateOnly(new Date(session.EndTime));
+    }
+
+    return this.getDateOnly(new Date(session.StartTime));
+  }
+
+  calculateCurrentStreakFromSessions(sessions, now = new Date()) {
+    const studyDates = new Set();
+
+    for (const session of sessions || []) {
+      const durationSeconds = Number(session.DurationSeconds) || 0;
+
+      if (durationSeconds > 0 && session.StartTime) {
+        studyDates.add(this.getSessionStudyDate(session));
+      }
+    }
+
+    const today = this.getDateOnly(now);
+    const yesterday = this.getPreviousDateOnly(today);
+
+    let dateToCheck = null;
+
+    if (studyDates.has(today)) {
+      dateToCheck = today;
+    } else if (studyDates.has(yesterday)) {
+      dateToCheck = yesterday;
+    } else {
+      return 0;
+    }
+
+    let streak = 0;
+
+    while (studyDates.has(dateToCheck)) {
+      streak += 1;
+      dateToCheck = this.getPreviousDateOnly(dateToCheck);
+    }
+
+    return streak;
+  }
+
+  async saveCurrentStreak(currentStreak, lastStudyDate) {
+    await this.ensureReady();
+
+    await this.db.runAsync(
+      `
+      INSERT OR REPLACE INTO Streaks (
+        StreakID,
+        CurrentStreak,
+        LastStudyDate,
+        UpdatedAt
+      )
+      VALUES (1, ?, ?, CURRENT_TIMESTAMP);
+      `,
+      Number(currentStreak) || 0,
+      lastStudyDate || null
+    );
+  }
+
+  async refreshCurrentStreak() {
+    await this.ensureReady();
+
+    const sessions = await this.getSessionHistory();
+    const currentStreak = this.calculateCurrentStreakFromSessions(
+      sessions,
+      new Date()
+    );
+
+    let lastStudyDate = null;
+
+    for (const session of sessions) {
+      const sessionDate = this.getSessionStudyDate(session);
+
+      if (!lastStudyDate || sessionDate > lastStudyDate) {
+        lastStudyDate = sessionDate;
+      }
+    }
+
+    await this.saveCurrentStreak(currentStreak, lastStudyDate);
+
+    return currentStreak;
+  }
+
+  async getCurrentStreak() {
+    try {
+      await this.ensureReady();
+      return await this.refreshCurrentStreak();
+    } catch (error) {
+      console.log("TimerRepo getCurrentStreak error:", error);
+      return 0;
+    }
   }
 
   getSessionDurationSeconds(finalTimerState, activeSession, now) {
@@ -333,6 +443,7 @@ class TimerRepo {
       this.repositoryStatus = "active session completed";
 
       await this.getSessionHistory();
+      await this.refreshCurrentStreak();
 
       return true;
     } catch (error) {
@@ -455,6 +566,8 @@ class TimerRepo {
       this.sessionList = [];
       this.activeSession = null;
       this.timerState = null;
+
+      await this.saveCurrentStreak(0, null);
 
       return true;
     } catch (error) {

@@ -274,13 +274,7 @@ class StatisticsRepo {
     try {
       await this.ensureReady();
 
-      const row = await this.db.getFirstAsync(`
-        SELECT CurrentStreak
-        FROM Streaks
-        WHERE StreakID = 1;
-      `);
-
-      return Number(row?.CurrentStreak) || 0;
+      return await timerRepo.getCurrentStreak();
     } catch (error) {
       console.log("StatisticsRepo getCurrentStreak error:", error);
       return 0;

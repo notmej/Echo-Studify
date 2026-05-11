@@ -1,4 +1,5 @@
-import { useEffect,useState} from "react";
+import { useCallback, useEffect,useState} from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import statisticsRepo from "../Repos/StatisticsRepo";
 
 export default function ViewModelStatisticsDashboard() {
@@ -29,6 +30,12 @@ export default function ViewModelStatisticsDashboard() {
     useEffect(() => {
         loadStatistics();
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadStatistics();
+        }, [])
+    );
 
     const selectedPeriodData =
         dashboardData?.periods?.[selectedPeriod] || null;

@@ -1,5 +1,6 @@
 import { AppState } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 
 import LogicTimer from "../Logic/LogicTimer";
 import TimerRepo from "../Repos/TimerRepo";
@@ -51,6 +52,13 @@ export default function ViewModelHomePage(navigation) {
   useEffect(() => {
     initializeHomePage();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshSessionCount();
+      refreshBlockedAppsDisplay();
+    }, [])
+  );
 
   useEffect(() => {
     timerStateRef.current = timerState;
@@ -481,14 +489,10 @@ export default function ViewModelHomePage(navigation) {
 
   async function refreshSessionCount() {
     const sessions = await TimerRepo.getSessionHistory();
+    const currentStreak = await TimerRepo.getCurrentStreak();
 
     setCurrentSessionCountDisplay(sessions.length);
-
-    if (sessions.length > 0) {
-      setTodayStreakDisplay(1);
-    } else {
-      setTodayStreakDisplay(0);
-    }
+    setTodayStreakDisplay(currentStreak);
   }
 
   function onDurationInputChange(valueInMinutes) {
