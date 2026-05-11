@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import LogicToDo from "../Logic/LogicToDo";
 import EnergyLogic from "../Logic/EnergyLogic";
@@ -19,8 +19,15 @@ export default function ViewModelToDoDashboard(navigation) {
   const [statusMessage, setStatusMessage] = useState("Loading tasks...");
   const [isDatabaseReady, setIsDatabaseReady] = useState(false);
 
+  const initPromiseRef = useRef(null);
+  const isMountedRef = useRef(true);
+
   useEffect(() => {
     initializeToDoDashboard();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -28,20 +35,40 @@ export default function ViewModelToDoDashboard(navigation) {
   }, [taskList, filterOption, dailyEnergyLevel]);
 
   async function initializeToDoDashboard() {
+    if (initPromiseRef.current) {
+      return initPromiseRef.current;
+    }
+
+    initPromiseRef.current = initializeToDoDashboardInternal();
+    const result = await initPromiseRef.current;
+    initPromiseRef.current = null;
+    return result;
+  }
+
+  async function initializeToDoDashboardInternal() {
     try {
       setIsDatabaseReady(false);
       setStatusMessage("Loading tasks...");
 
-      await ToDoRepo.init();
-      await EnergyRepo.init();
+      const todoReady = await ToDoRepo.init();
+      const energyReady = await EnergyRepo.init();
+
+      if (!todoReady || !energyReady) {
+        setIsDatabaseReady(false);
+        setStatusMessage("Database failed to load.");
+        return false;
+      }
 
       const savedEnergy = await EnergyRepo.getTodayEnergyLevel();
-      setDailyEnergyLevel(savedEnergy);
-
       const tasks = await ToDoRepo.getTasks("All");
+
+      if (!isMountedRef.current) {
+        return false;
+      }
+
+      setDailyEnergyLevel(savedEnergy);
       setTaskList(tasks);
       refreshDisplayedTasks(tasks, filterOption, savedEnergy);
-
       setIsDatabaseReady(true);
 
       if (tasks.length === 0) {
@@ -51,11 +78,23 @@ export default function ViewModelToDoDashboard(navigation) {
       } else {
         setStatusMessage("Tasks loaded in your manual order.");
       }
+
+      return true;
     } catch (error) {
       console.log("initializeToDoDashboard error:", error);
       setIsDatabaseReady(false);
       setStatusMessage("Tasks failed to load.");
+      return false;
     }
+  }
+
+  async function ensureDatabaseReady() {
+    if (isDatabaseReady) {
+      return true;
+    }
+
+    setStatusMessage("Database is loading. Trying again...");
+    return await initializeToDoDashboard();
   }
 
   function refreshDisplayedTasks(tasks, filter, energyLevel) {
@@ -77,8 +116,10 @@ export default function ViewModelToDoDashboard(navigation) {
   }
 
   async function onCreateTask() {
-    if (!isDatabaseReady) {
-      setStatusMessage("Database is still loading.");
+    const databaseReady = await ensureDatabaseReady();
+
+    if (!databaseReady) {
+      setStatusMessage("Database is not ready yet. Please reopen the Tasks page.");
       return;
     }
 
@@ -106,11 +147,23 @@ export default function ViewModelToDoDashboard(navigation) {
     setDueDate("");
     setSelectedDifficulty("");
 
-    await reloadTasks();
-    setStatusMessage("Task created.");
+    const tasks = await reloadTasks();
+
+    if (tasks.length > 0) {
+      setStatusMessage("Task created.");
+    } else {
+      setStatusMessage("Task saved, but the list could not refresh.");
+    }
   }
 
   async function onDeleteTask(taskID) {
+    const databaseReady = await ensureDatabaseReady();
+
+    if (!databaseReady) {
+      setStatusMessage("Database is not ready.");
+      return;
+    }
+
     const wasDeleted = await ToDoRepo.deleteTask(taskID);
     await reloadTasks();
 
@@ -122,6 +175,13 @@ export default function ViewModelToDoDashboard(navigation) {
   }
 
   async function onMarkComplete(taskID) {
+    const databaseReady = await ensureDatabaseReady();
+
+    if (!databaseReady) {
+      setStatusMessage("Database is not ready.");
+      return;
+    }
+
     const wasUpdated = await ToDoRepo.toggleTaskCompletion(taskID);
     await reloadTasks();
 
@@ -132,16 +192,23 @@ export default function ViewModelToDoDashboard(navigation) {
     }
   }
 
-  async function onMoveTask(taskID, direction) {
-    const wasMoved = await ToDoRepo.moveTask(taskID, direction);
-    await reloadTasks();
+//   async function onMoveTask(taskID, direction) {
+//     const databaseReady = await ensureDatabaseReady();
 
-    if (wasMoved) {
-      setStatusMessage("Task order updated.");
-    } else {
-      setStatusMessage("Task could not move further " + direction + ".");
-    }
-  }
+//     if (!databaseReady) {
+//       setStatusMessage("Database is not ready.");
+//       return;
+//     }
+
+//     const wasMoved = await ToDoRepo.moveTask(taskID, direction);
+//     await reloadTasks();
+
+//     if (wasMoved) {
+//       setStatusMessage("Task order updated.");
+//     } else {
+//       setStatusMessage("Task could not move further " + direction + ".");
+//     }
+//   }
 
   function onFilterChange(filter) {
     setFilterOption(filter);
@@ -156,6 +223,13 @@ export default function ViewModelToDoDashboard(navigation) {
   }
 
   async function onDailyEnergyChange(energyLevel) {
+    const databaseReady = await ensureDatabaseReady();
+
+    if (!databaseReady) {
+      setStatusMessage("Database is not ready.");
+      return;
+    }
+
     const normalizedEnergy = EnergyLogic.normalizeEnergyLevel(energyLevel);
 
     if (!EnergyLogic.isValidEnergyLevel(normalizedEnergy)) {
@@ -174,6 +248,13 @@ export default function ViewModelToDoDashboard(navigation) {
   }
 
   async function onClearDailyEnergy() {
+    const databaseReady = await ensureDatabaseReady();
+
+    if (!databaseReady) {
+      setStatusMessage("Database is not ready.");
+      return;
+    }
+
     await EnergyRepo.clearEnergyLevel();
     setDailyEnergyLevel("");
     await reloadTasks("");
@@ -229,7 +310,7 @@ export default function ViewModelToDoDashboard(navigation) {
     onCreateTask,
     onDeleteTask,
     onMarkComplete,
-    onMoveTask,
+    // onMoveTask,
     onFilterChange,
     onDailyEnergyChange,
     onClearDailyEnergy,
