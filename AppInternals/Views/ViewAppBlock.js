@@ -1,19 +1,3 @@
-// usage before implementation
-// 1. open app blocking page
-// 2. sqlite database is created locally on first opening of this page
-// 3. open permission settings
-// 4. enable usage access for studify
-// 5. go back to studify
-// 6. press check permissions
-// 7. select youtube or another app
-// 8. press save blocked apps
-// 9. press start blocking
-// 10. leave studify
-// 11. open the blocked app
-// 12. studify should reopen after around 1 second
-
-
-
 import React, { useState } from "react";
 import {
   View,
@@ -380,3 +364,19 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 });
+
+
+
+// usage before implementation for dev
+// 1. open app blocking page
+// 2. sqlite database is created locally on first opening of this page
+// 3. open permission settings
+// 4. enable usage access for studify
+// 5. go back to studify
+// 6. press check permissions
+// 7. select youtube or another app
+// 8. press save blocked apps
+// 9. press start blocking
+// 10. leave studify
+// 11. open the blocked app
+// 12. studify should reopen after around 1 second

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import EnergyLogic from "../Logic/EnergyLogic";
 import EnergyRepo from "../Repos/EnergyRepo";
 
