@@ -1,4 +1,9 @@
-import React from "react";
+// To Run:
+// Studify % cd android
+// ./gradlew clean
+// cd ..
+// npx expo run:android
+
 
 import {
   StyleSheet,
