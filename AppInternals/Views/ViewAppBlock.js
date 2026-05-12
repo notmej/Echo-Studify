@@ -87,24 +87,20 @@ export default function ViewAppBlock() {
           Saved Packages in SQLite: {savedPackagesCount}
         </Text> */}
 
-        <ScrollView
-          style={styles.container3}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {!permissionStatus && (
-            <TouchableOpacity
-              style={styles.permissionButton}
-              onPress={openPermissionSettings}
-            >
-              <Text style={styles.saveButtonText}>Open Permission Settings</Text>
-            </TouchableOpacity>
-          )}
+        <View style={styles.permissionArea}>
+            {!permissionStatus && (
+              <TouchableOpacity
+                style={styles.permissionButton}
+                onPress={openPermissionSettings}
+              >
+                <Text style={styles.saveButtonText}>Open Permission Settings</Text>
+              </TouchableOpacity>
+            )}
 
-          <TouchableOpacity style={styles.refreshButton} onPress={checkPermissions}>
-            <Text style={styles.saveButtonText}>Check Permissions</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            <TouchableOpacity style={styles.refreshButton} onPress={checkPermissions}>
+              <Text style={styles.saveButtonText}>Check Permissions</Text>
+            </TouchableOpacity>
+          </View>
 
         <TextInput
           style={styles.searchInput}
@@ -207,11 +203,6 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
 
-  container3: {
-    height: 200,
-    backgroundColor: "transparent",
-  },
-
   scrollContent: {
     paddingBottom: 10,
   },
@@ -238,13 +229,13 @@ const styles = StyleSheet.create({
 
   searchInput: {
     borderWidth: 1,
-    borderColor: color1,
+    borderColor: brownColor,
     borderRadius: 10,
     padding: 12,
-    marginBottom: 10,
+    marginTop: 10,
+    marginBottom: 20,
     backgroundColor: inputBoxColor,
     color: brownColor,
-    fontWeight: "600",
   },
 
   sectionTitle: {
