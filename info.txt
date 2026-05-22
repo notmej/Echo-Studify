@@ -1,0 +1,17 @@
+
+You can generate a release keystore like this:
+keytool -genkeypair -v \
+-keystore studify-release-key.jks \
+-keyalg RSA \
+-keysize 2048 \
+-validity 10000 \
+-alias studify
+
+
+public certificate fingerprints for your local Android build:
+keytool -list -v \
+-keystore ~/.android/debug.keystore \
+-alias androiddebugkey \
+-storepass android \
+-keypass android
+
