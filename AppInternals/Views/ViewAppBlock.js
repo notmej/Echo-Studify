@@ -96,10 +96,6 @@ export default function ViewAppBlock() {
                 <Text style={styles.saveButtonText}>Open Permission Settings</Text>
               </TouchableOpacity>
             )}
-
-            <TouchableOpacity style={styles.refreshButton} onPress={checkPermissions}>
-              <Text style={styles.saveButtonText}>Check Permissions</Text>
-            </TouchableOpacity>
           </View>
 
         <TextInput
@@ -304,15 +300,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  refreshButton: {
-    backgroundColor: inputBoxColor,
-    padding: 14,
-    borderRadius: 10,
-    marginTop: 10,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: color1,
-  },
+  // refreshButton: {
+  //   backgroundColor: inputBoxColor,
+  //   padding: 14,
+  //   borderRadius: 10,
+  //   marginTop: 10,
+  //   alignItems: "center",
+  //   borderWidth: 1,
+  //   borderColor: color1,
+  // },
 
   permissionButton: {
     backgroundColor: color1,
