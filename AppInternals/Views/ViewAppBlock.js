@@ -26,7 +26,10 @@ const theme = {
   overlay: "rgba(4, 18, 13, 0.55)",
 };
 
-export default function ViewAppBlock({ navigation }) {
+export default function ViewAppBlock({
+  navigation,
+  onRequestAccessibilityConsent,
+}) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const {
@@ -127,7 +130,9 @@ export default function ViewAppBlock({ navigation }) {
                   ? styles.permissionPillEnabled
                   : styles.permissionPillDisabled,
               ]}
-              onPress={permissionStatus ? undefined : openPermissionSettings}
+              onPress={
+                permissionStatus ? undefined : onRequestAccessibilityConsent
+              }
               disabled={!!permissionStatus}
               accessibilityRole="button"
               accessibilityLabel={
@@ -341,10 +346,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     includeFontPadding: false,
     textAlignVertical: "center",
-    transform: [
-      { rotate: "90deg" }, // Rotate clockwise
-      { translateY: -9 }, // Adjust position
-    ],
+    transform: [{ rotate: "90deg" }, { translateY: -9 }],
   },
 
   headerBrand: {

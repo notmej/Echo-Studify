@@ -1,491 +1,497 @@
-# Studify Setup Guide
+# Studify
 
-Studify is a React Native / Expo app with custom native Android code for app blocking. Because the project uses native Android files, it **cannot run with Expo Go**. You must build and run the Android app locally using a native build.
+**A distraction-free study and productivity app for Android.**
 
-Use:
+Studify helps students organize tasks, manage focus sessions, monitor productivity, and reduce distractions through optional application blocking.
 
-```bash
-npx expo run:android
+Built with **React Native, Expo, JavaScript, SQLite, and native Android Java**.
+
+> **Development status:** Studify is under active development and is not yet a production release.
+
+## Features
+
+### Focus Timer
+
+- Manage focused study sessions.
+- Use the available timer modes.
+- Track study time and progress.
+- Integrate focus sessions with optional app blocking.
+
+### Task Management
+
+- Create and manage study tasks.
+- Track completed and pending tasks.
+- Organize daily work.
+
+### Productivity Statistics
+
+- View study activity and productivity statistics.
+- Review recorded focus sessions.
+- Track daily energy and productivity information.
+
+### App Blocking (Android)
+
+- View installed launcher applications.
+- Search and select distracting applications.
+- Save or clear the blocked-app selection.
+- Restrict selected applications during supported focus sessions.
+- Use Android's AccessibilityService API to detect foreground applications.
+
+App blocking is optional. Other Studify features can be used without enabling Accessibility access.
+
+## Technology Stack
+
+| Component            | Technology                   |
+| -------------------- | ---------------------------- |
+| Framework            | React Native                 |
+| Development platform | Expo SDK 54                  |
+| Language             | JavaScript                   |
+| Navigation           | React Navigation             |
+| Local database       | SQLite (`expo-sqlite`)       |
+| Local preferences    | AsyncStorage                 |
+| Native Android code  | Java and Kotlin              |
+| App blocking         | Android AccessibilityService |
+| Android build system | Gradle                       |
+| Splash screen        | `expo-splash-screen`         |
+
+## Project Structure
+
+```text
+Studify/
+├── App.js
+├── app.json
+├── package.json
+├── package-lock.json
+├── assets/
+│   ├── icon.png
+│   ├── adaptive-icon.png
+│   ├── splash-icon.png
+│   └── 25_00.png
+├── AppInternals/
+│   ├── Views/
+│   │   ├── ViewHomePage.js
+│   │   ├── ViewAppBlock.js
+│   │   ├── ViewToDoDashboard.js
+│   │   └── ViewStatisticsDashboard.js
+│   ├── ViewModels/
+│   │   └── ViewModelAppBlock.js
+│   └── ...
+├── android/
+│   └── app/src/main/
+│       ├── java/com/echogritstudio/studify/
+│       │   ├── MainActivity.kt
+│       │   ├── MainApplication.kt
+│       │   ├── AppBlockPackage.java
+│       │   ├── NativeModuleAppBlock.java
+│       │   └── AppBlockAccessibilityService.java
+│       ├── res/xml/
+│       │   └── app_block_accessibility_service.xml
+│       ├── res/values/
+│       │   └── strings.xml
+│       └── AndroidManifest.xml
+└── README.md
 ```
 
-Do **not** rely on only:
+Additional Views, ViewModels, components, and assets are maintained inside the project.
 
-```bash
-npx expo start
-```
+## Requirements
 
-## Project Requirements
+Install the following tools before running Studify:
 
-A teammate needs to install:
-
-- Visual Studio Code
 - Git
-- Node.js LTS
-- Android Studio
-- Android SDK / Emulator
+- Node.js (compatible LTS version)
+- npm
 - Java JDK 17
-- Project dependencies with `npm install`
+- Android Studio
+- Android SDK and Platform-Tools
+- Android Emulator or an Android phone with USB debugging enabled
+- Visual Studio Code or another code editor (optional)
 
-## Important Native Files
+Useful links:
 
-This project depends on custom Android files. Make sure these exist after cloning/pulling the repository:
+- [Node.js](https://nodejs.org/)
+- [Android Studio](https://developer.android.com/studio)
+- [JDK 17](https://adoptium.net/)
+- [Visual Studio Code](https://code.visualstudio.com/)
 
-```txt
-android/app/src/main/java/com/team2/studify/NativeModuleAppBlock.java
-android/app/src/main/java/com/team2/studify/AppBlockPackage.java
-android/app/src/main/java/com/team2/studify/AppBlockAccessibilityService.java
-android/app/src/main/res/xml/app_block_accessibility_service.xml
-android/app/src/main/res/values/strings.xml
-android/app/src/main/AndroidManifest.xml
-```
+**Important:** Studify uses custom native Android code and cannot run its app-blocking functionality in Expo Go. Use a native development build.
 
-If any of these files are missing, the app blocker may fail to build or work.
-
----
-
-# 1. Install Visual Studio Code
-
-Download and install VS Code:
-
-```txt
-https://code.visualstudio.com/
-```
-
-Recommended VS Code extensions:
-
-```txt
-ES7+ React/Redux/React-Native snippets
-Prettier
-JavaScript and TypeScript Nightly
-GitLens
-```
-
-VS Code is only the editor. It does not build Android apps by itself.
-
----
-
-# 2. Install Git
-
-Git is needed to clone and pull the project from GitHub.
-
-## macOS
-
-Install Homebrew if needed:
+## 1. Clone the Repository
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+git clone https://github.com/notmej/Echo-Studify.git
+cd Echo-Studify
 ```
 
-Then install Git:
+All subsequent commands assume you are in the repository's root directory, where `package.json` is located.
 
-```bash
-brew install git
-```
-
-Check that Git installed correctly:
-
-```bash
-git --version
-```
-
-## Windows
-
-Download Git for Windows:
-
-```txt
-https://git-scm.com/download/win
-```
-
-Then check in PowerShell or Git Bash:
-
-```bash
-git --version
-```
-
----
-
-# 3. Install Node.js
-
-Install the **LTS** version of Node.js:
-
-```txt
-https://nodejs.org/
-```
-
-After installing, check:
-
-```bash
-node -v
-npm -v
-```
-
-Use the LTS version, not the newest experimental/current version.
-
----
-
-# 4. Install Android Studio
-
-Download Android Studio:
-
-```txt
-https://developer.android.com/studio
-```
-
-During setup, make sure these are installed:
-
-```txt
-Android SDK
-Android SDK Platform
-Android SDK Platform-Tools
-Android Emulator
-Android SDK Build-Tools
-```
-
-You can use either:
-
-- an Android emulator from Android Studio, or
-- a physical Android phone with USB debugging enabled.
-
----
-
-# 5. Set Android Environment Variables
-
-## macOS
-
-Open your shell config file. If you use zsh:
-
-```bash
-nano ~/.zshrc
-```
-
-Add:
-
-```bash
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/tools/bin
-```
-
-Save, then run:
-
-```bash
-source ~/.zshrc
-```
-
-Check:
-
-```bash
-echo $ANDROID_HOME
-adb version
-```
-
-## Windows
-
-Open **Environment Variables** and add:
-
-```txt
-ANDROID_HOME = C:\Users\YOUR_NAME\AppData\Local\Android\Sdk
-```
-
-Then add these to `Path`:
-
-```txt
-%ANDROID_HOME%\platform-tools
-%ANDROID_HOME%\emulator
-%ANDROID_HOME%\tools
-%ANDROID_HOME%\tools\bin
-```
-
-Restart the terminal, then check:
-
-```bash
-adb version
-```
-
----
-
-# 6. Install Java / JDK 17
-
-Android builds need a compatible JDK. Use **JDK 17**.
-
-## macOS with Homebrew
-
-```bash
-brew install --cask zulu@17
-```
-
-Check:
-
-```bash
-java -version
-```
-
-## Windows
-
-Install JDK 17 from:
-
-```txt
-https://adoptium.net/
-```
-
-Then check:
-
-```bash
-java -version
-```
-
----
-
-# 7. Clone the Project
-
-In the folder where you want the project:
-
-```bash
-git clone YOUR_REPO_URL
-cd Studify
-```
-
-Example:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/Studify.git
-cd Studify
-```
-
-Then pull the latest code:
+To update an existing clone:
 
 ```bash
 git pull
 ```
 
----
-
-# 8. Install Project Dependencies
-
-From the main `Studify` folder:
+## 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-This installs dependencies from `package.json`.
+For a reproducible installation using the committed lockfile, you can use:
 
-Do **not** push `node_modules/` to Git.
+```bash
+npm ci
+```
 
----
+The project includes dependencies such as:
 
-# 9. Create `android/local.properties`
+- `expo`
+- `expo-sqlite`
+- `expo-splash-screen`
+- `@react-native-async-storage/async-storage`
+- React Native and React Navigation packages
 
-This file is local to each computer and should **not** be pushed to Git.
+Do not install arbitrary newer Expo SDK versions without checking compatibility.
 
-Create this file:
+## 3. Configure Android
 
-```txt
+### macOS
+
+Install Android Studio and the required Android SDK components:
+
+- Android SDK Platform
+- Android SDK Platform-Tools
+- Android SDK Build-Tools
+- Android Emulator
+- A supported Android system image
+
+If your Android SDK is installed in the default macOS location, add the following to `~/.zshrc`:
+
+```bash
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export PATH="$PATH:$ANDROID_HOME/platform-tools"
+export PATH="$PATH:$ANDROID_HOME/emulator"
+```
+
+Reload the configuration:
+
+```bash
+source ~/.zshrc
+```
+
+Verify:
+
+```bash
+adb version
+java -version
+```
+
+### Windows
+
+Install Android Studio and JDK 17.
+
+Set `ANDROID_HOME` to your Android SDK directory. The default is commonly:
+
+```text
+C:\Users\YOUR_USERNAME\AppData\Local\Android\Sdk
+```
+
+Add the following directories to the system `Path`:
+
+```text
+%ANDROID_HOME%\platform-tools
+%ANDROID_HOME%\emulator
+```
+
+Restart the terminal and verify:
+
+```bash
+adb version
+java -version
+```
+
+### Android SDK Location
+
+If Gradle cannot find the SDK, create:
+
+```text
 android/local.properties
 ```
 
-## macOS
+On macOS:
 
-Add this, replacing `YOUR_MAC_USERNAME`:
-
-```txt
-sdk.dir=/Users/YOUR_MAC_USERNAME/Library/Android/sdk
+```properties
+sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
 ```
 
-Example:
+On Windows, use your installed SDK directory with properly escaped backslashes or forward slashes.
 
-```txt
-sdk.dir=/Users/yuna/Library/Android/sdk
-```
+`android/local.properties` is machine-specific and should not be committed.
 
-## Windows
+## 4. Start an Emulator or Connect a Device
 
-Add this, replacing `YOUR_WINDOWS_USERNAME`:
+In Android Studio:
 
-```txt
-sdk.dir=C:\\Users\\YOUR_WINDOWS_USERNAME\\AppData\\Local\\Android\\Sdk
-```
+1. Open Device Manager.
+2. Create an Android Virtual Device.
+3. Install a compatible Android system image.
+4. Start the emulator.
 
----
+Alternatively, connect an Android phone with USB debugging enabled.
 
-# 10. Start an Android Emulator
-
-Open Android Studio.
-
-Go to:
-
-```txt
-Tools → Device Manager
-```
-
-Create an emulator if needed.
-
-Recommended emulator setup:
-
-```txt
-Pixel device
-Recent Android API
-Google Play image
-```
-
-Start the emulator.
-
-Then check that the terminal sees it:
+Check connected devices:
 
 ```bash
 adb devices
 ```
 
-Expected output:
+Expected output resembles:
 
-```txt
+```text
 List of devices attached
-emulator-5554 device
+emulator-5554    device
 ```
 
----
+## 5. Build and Run Studify
 
-# 11. Build and Run the App
+From the repository root:
 
-From the main `Studify` folder:
+```bash
+npx expo run:android --device
+```
+
+Select an emulator or connected Android device.
+
+Expo will compile the native Android application, install the development APK, and start Metro.
+
+For a default connected device, you can also run:
 
 ```bash
 npx expo run:android
 ```
 
-This builds the native Android project and installs it on the emulator/device.
+**Do not use Expo Go for testing native app blocking.**
 
-Do **not** use Expo Go for this project.
+After the native application has been installed, JavaScript-only changes can normally be applied through Metro's reload functionality without rebuilding the Android APK.
 
-You can still start Metro with:
+Native Java/Kotlin changes and changes to Android resources require a new native build.
 
-```bash
-npx expo start
-```
+## 6. Accessibility Permission and Consent
 
-but the app itself must be installed through the native Android build first.
+Studify's optional app-blocking feature uses Android's AccessibilityService API.
 
----
+### What the service does
 
-# 12. Enable Accessibility Permission
+When enabled, the service detects which application is currently in the foreground, including its package identifier.
 
-The app blocker uses Android Accessibility Service.
+During a supported focus session, Studify compares the foreground application against the saved blocked-app selection and can redirect the user away from selected applications.
 
-After the app opens:
+Accessibility access is sensitive because Android accessibility services can potentially observe information about other applications and their interfaces.
 
-```txt
-1. Go to the App Blocking page.
-2. Press Open Permission Settings / Open Accessibility Settings.
-3. Android Settings will open.
-4. Find Studify.
-5. Enable the Studify accessibility service.
-6. Go back to Studify.
-7. Press Check Permissions.
-```
+### First-launch disclosure
 
-If permission is enabled, the app should show something like:
+On a fresh installation, Studify displays a disclosure explaining the optional AccessibilityService feature.
 
-```txt
-Accessibility permission is enabled.
-```
+Users can choose:
 
----
+**Not Now**
 
-# 13. Test App Blocking
+- Declines the application's consent request.
+- Closes the disclosure.
+- Allows normal use of Studify without app blocking.
 
-Use this flow:
+**I Agree & Continue**
 
-```txt
-1. Open App Blocking page.
-2. Select an app, for example YouTube.
-3. Press Save Blocked Apps.
-4. Press Start Blocking.
-5. Leave Studify.
-6. Open YouTube.
-7. Studify should reopen / redirect you away from YouTube.
-```
+- Records affirmative consent locally.
+- Opens Android Accessibility Settings.
+- Allows the user to manually enable the service.
 
-The app blocker flow is:
+Selecting "I Agree & Continue" does not automatically grant Android Accessibility access.
 
-```txt
+### Enabling access later
+
+If the user previously selected "Not Now":
+
+1. Open Studify.
+2. Navigate to **App Blocking**.
+3. Tap **Enable Access**.
+4. Review the Accessibility disclosure.
+5. Tap **I Agree & Continue**.
+6. Enable Studify in Android Accessibility Settings.
+7. Return to Studify.
+
+When Android reports that the service is enabled, the App Blocking page displays **Ready**.
+
+Users can disable the service through Android Settings at any time.
+
+The disclosure and consent implementation should be reviewed against the application's actual native behavior before publication.
+
+## 7. Configure App Blocking
+
+1. Open the App Blocking page.
+2. Grant Accessibility access through the consent flow if needed.
+3. Browse or search installed applications.
+4. Tap **Select** beside an application to add it to the blocking selection.
+5. Tap **Remove** to deselect an application.
+6. Select **Save Blocked Apps** to save the selection.
+7. Start a supported focus session to test blocking.
+8. Attempt to open a selected application.
+9. Verify that Studify redirects away from the application while blocking is active.
+
+Use **Clear Blocked Apps** to remove the saved blocking selection.
+
+Selecting an app is not the same as immediately starting a focus session.
+
+### Native App-Blocking Architecture
+
+```text
+React Native UI
+    |
+    v
 ViewAppBlock.js
-→ ViewModelAppBlock.js
-→ AppBlockBridge.js
-→ NativeModuleAppBlock.java
-→ SharedPreferences
-→ AppBlockAccessibilityService.java
+    |
+    v
+ViewModelAppBlock.js
+    |
+    v
+AppBlockBridge.js
+    |
+    v
+NativeModuleAppBlock.java
+    |
+    v
+Android SharedPreferences
+    |
+    v
+AppBlockAccessibilityService.java
 ```
 
-The selected blocked apps are saved in Android `SharedPreferences`. The accessibility service reads that saved list and reacts when a blocked app appears in the foreground.
+The native service reads the configured application list and responds to relevant accessibility events.
 
----
+The React Native bridge is registered through `AppBlockPackage.java` in `MainApplication.kt`.
 
-# 14. Common Build Errors and Fixes
+## 8. App Branding
 
-## Error: `resource xml/app_block_accessibility_service not found`
+Studify uses a dark forest-green and gold visual identity.
 
-This means this file is missing:
+The primary interface colors include:
 
-```txt
-android/app/src/main/res/xml/app_block_accessibility_service.xml
+```text
+Background:    #091B15
+Surface:       #102820
+Raised card:   #19362C
+Emerald:       #28765A
+Ivory:         #F3EFE2
+Gold:          #C3A777
 ```
 
-Create the folder:
+### Icon Assets
+
+```text
+assets/icon.png
+assets/adaptive-icon.png
+assets/splash-icon.png
+```
+
+- `icon.png`: Main square icon artwork.
+- `adaptive-icon.png`: Transparent foreground logo for Android adaptive icons.
+- `splash-icon.png`: Image used by the native splash screen.
+
+Android launchers control the final adaptive icon mask, which may appear circular or rounded-square.
+
+### Splash Screen
+
+The splash screen is configured through the `expo-splash-screen` plugin in `app.json`, with a dark-green background.
+
+When modifying native branding resources:
+
+1. Back up or commit the existing Android changes.
+2. Update the relevant image assets and `app.json`.
+3. Apply native configuration changes carefully.
+4. Rebuild the Android application.
+
+Because the project contains custom native code, avoid:
 
 ```bash
-mkdir -p android/app/src/main/res/xml
+npx expo prebuild --clean
 ```
 
-Then create:
+A clean prebuild can regenerate the native Android directory and remove manually maintained native files.
 
-```txt
-android/app/src/main/res/xml/app_block_accessibility_service.xml
+If prebuild is necessary, use:
+
+```bash
+npx expo prebuild --platform android
 ```
 
-with:
+Review the resulting changes to `android/` before committing or distributing the build.
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<accessibility-service
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
-    android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagReportViewIds"
-    android:canRetrieveWindowContent="false"
-    android:description="@string/app_block_accessibility_description"
-    android:notificationTimeout="100" />
+## 9. Fresh Installation
+
+To completely uninstall Studify from a connected Android emulator or device:
+
+```bash
+adb uninstall com.echogritstudio.studify
 ```
 
-## Error: `string/app_block_accessibility_description not found`
+Reinstall:
 
-Open:
-
-```txt
-android/app/src/main/res/values/strings.xml
+```bash
+npx expo run:android --device
 ```
 
-Add this inside `<resources>`:
+This is useful for testing:
 
-```xml
-<string name="app_block_accessibility_description">
-  Studify uses accessibility access to detect when selected blocked apps are opened during a focus session.
-</string>
+- The first-launch experience.
+- Accessibility disclosure.
+- Initial database setup.
+- Default preferences.
+- Newly installed app behavior.
+
+**Warning:** Uninstalling removes the application's locally stored data, including tasks, preferences, and saved consent information. Verify the Android service state separately after reinstalling.
+
+## 10. Troubleshooting
+
+### Expo Attempts to Install an Unexpected SDK
+
+If `npx expo` attempts to install a newer Expo SDK, verify your terminal is inside the repository root:
+
+```bash
+pwd
+ls package.json
 ```
 
-## Error: `AppBlockModule is not available`
+Then:
 
-This usually means the native module is not registered or the app was opened through Expo Go.
-
-Check these files:
-
-```txt
-android/app/src/main/java/com/team2/studify/AppBlockPackage.java
-android/app/src/main/java/com/team2/studify/MainApplication.kt
+```bash
+npm install
+npx expo run:android --device
 ```
 
-`MainApplication.kt` should include:
+Do not approve an unexpected SDK upgrade.
+
+### AppBlockPackage Class Not Found
+
+If the application crashes with:
+
+```text
+ClassNotFoundException:
+com.echogritstudio.studify.AppBlockPackage
+```
+
+Verify that the file exists:
+
+```text
+android/app/src/main/java/com/echogritstudio/studify/AppBlockPackage.java
+```
+
+And that the package declaration is:
+
+```java
+package com.echogritstudio.studify;
+```
+
+`MainApplication.kt` should register the package:
 
 ```kotlin
 override fun getPackages(): List<ReactPackage> =
@@ -494,151 +500,195 @@ override fun getPackages(): List<ReactPackage> =
   }
 ```
 
+Compile the custom Java module:
+
+```bash
+cd android
+./gradlew :app:compileDebugJavaWithJavac
+```
+
+Check for its compiled class:
+
+```bash
+find app/build -name "AppBlockPackage.class"
+```
+
+Successful compilation does not necessarily guarantee that Android can load the class from the installed APK.
+
+If the application still crashes, inspect Android's runtime logs and confirm the correct APK is installed.
+
+### Build Fails Due to Stale Native Files
+
+From the repository root, try removing generated Android build outputs:
+
+```bash
+rm -rf android/app/.cxx
+rm -rf android/app/build
+```
+
 Then rebuild:
 
 ```bash
-cd android
-./gradlew clean
-cd ..
-npx expo run:android
+npx expo run:android --device
 ```
 
-## Error: App opens but no installed apps show
+These commands do not remove the native source files under `android/app/src/main`.
 
-Make sure the native build was rebuilt:
+### Metro Reports "No Apps Connected"
+
+This generally indicates that Metro cannot currently communicate with a running React Native instance.
+
+Check:
 
 ```bash
-cd android
-./gradlew clean
-cd ..
-npx expo run:android
+adb devices
 ```
 
-Also check that `AndroidManifest.xml` has the launcher package query:
+Then try launching the installed application:
+
+```bash
+adb shell am start -n \
+com.echogritstudio.studify/.MainActivity
+```
+
+To inspect Android runtime crashes:
+
+```bash
+adb logcat -d -s AndroidRuntime:E
+```
+
+A successful Gradle build does not guarantee that the app will launch successfully.
+
+### Accessibility Permission Does Not Appear
+
+Android Accessibility access does not use a standard runtime permission dialog.
+
+Studify shows its own disclosure and then opens Android Accessibility Settings after affirmative consent.
+
+If the disclosure was already acknowledged, use the **Enable Access** button on the App Blocking page to reopen it when permission is disabled.
+
+To test first launch, use a fresh installation on a test device.
+
+### Installed Apps List Is Empty
+
+Check that:
+
+- The native Android module is available.
+- The application has been rebuilt after native changes.
+- The installed-app query configuration is present in the Android manifest.
+- The device actually has launchable applications installed.
+
+The Android manifest may require the relevant launcher-intent query:
 
 ```xml
 <queries>
-  <intent>
-    <action android:name="android.intent.action.MAIN"/>
-    <category android:name="android.intent.category.LAUNCHER"/>
-  </intent>
+    <intent>
+        <action
+            android:name="android.intent.action.MAIN" />
+        <category
+            android:name="android.intent.category.LAUNCHER" />
+    </intent>
 </queries>
 ```
 
-## Error: App does not block after selecting apps
+Verify compatibility with the installed Android version.
 
-Check this flow:
+### App Blocking Does Not Work
 
-```txt
-1. Accessibility permission is enabled.
-2. You pressed Save Blocked Apps.
-3. You pressed Start Blocking.
-4. The selected app is actually the app being opened.
-```
+Check that:
 
-Then rebuild if needed.
+1. Android Accessibility access is enabled.
+2. The app is included in the saved blocked-app selection.
+3. A supported focus session is active.
+4. The foreground application matches the saved package name.
+5. The native AccessibilityService is running.
 
----
+Test on a physical Android device as well as an emulator.
 
-# 15. Useful Cleanup Commands
+## 11. Git and Native Files
 
-From the main project folder:
+The `android/` directory must remain tracked because Studify contains custom native Java and Kotlin code.
 
-```bash
-cd android
-./gradlew clean
-cd ..
-npm install
-npx expo run:android
-```
+Do not commit generated files such as:
 
-If Metro cache acts weird:
-
-```bash
-npx expo start -c
-```
-
----
-
-# 16. Git Notes
-
-Do not push:
-
-```txt
+```text
 node_modules/
 .expo/
 android/.gradle/
 android/build/
 android/app/build/
+android/app/.cxx/
 android/local.properties
 ```
 
-But the `android/` folder itself **must be tracked**, because the project contains custom native Android files.
+Do not ignore the entire `android/` directory.
 
-Keep this commented out in `.gitignore`:
+Before changing native configuration, create a Git commit:
 
-```gitignore
-#/android
+```bash
+git add .
+git commit -m "Backup native Android configuration"
 ```
 
-Do **not** change it to:
+Review modifications after running Expo prebuild:
 
-```gitignore
-/android
+```bash
+git status
+git diff -- android/
 ```
 
-or Git will ignore the native Android files.
+## 12. Preparing for Production
 
-Recommended `.gitignore` Android section:
+Before publishing Studify:
 
-```gitignore
-# generated native folders
-/ios
-#/android
+- [ ] Verify clean installation and successful startup.
+- [ ] Fix all reproducible native and JavaScript crashes.
+- [ ] Test Accessibility consent, including declining and retrying.
+- [ ] Review the actual native service data access and behavior.
+- [ ] Test app blocking on physical Android devices.
+- [ ] Test timers, tasks, persistence, and statistics.
+- [ ] Check dependency compatibility and security findings.
+- [ ] Prepare a public privacy policy.
+- [ ] Complete Google Play Accessibility API and Data Safety declarations.
+- [ ] Prepare screenshots, descriptions, and store listing graphics.
+- [ ] Configure production signing and versioning.
+- [ ] Generate and test a signed Android App Bundle.
+- [ ] Complete any required Google Play testing.
 
-# Android build/cache
-android/.gradle/
-android/build/
-android/app/build/
-android/local.properties
-```
+The debugging APK produced by `expo run:android` is not the final Google Play release artifact.
+
+## 13. Useful Commands
+
+| Task                   | Command                                    |
+| ---------------------- | ------------------------------------------ |
+| Install dependencies   | `npm install`                              |
+| Run on Android         | `npx expo run:android --device`            |
+| Start Metro            | `npx expo start`                           |
+| Clear Metro cache      | `npx expo start -c`                        |
+| List connected devices | `adb devices`                              |
+| Uninstall Studify      | `adb uninstall com.echogritstudio.studify` |
+| Check Expo project     | `npx expo-doctor`                          |
+| Inspect changes        | `git status`                               |
+| Build Android bundle   | `cd android && ./gradlew bundleRelease`    |
+
+Production builds require suitable release-signing configuration.
+
+## Repository
+
+**GitHub:** [notmej/Echo-Studify](https://github.com/notmej/Echo-Studify)
+
+## Development Notes
+
+Studify was initially developed as an academic team project and is continuing through further development and refinement.
+
+The application combines React Native functionality with custom Android integration for optional application blocking.
+
+## Platform Support
+
+**Android:** Primary supported development platform.
+
+**iOS:** Some React Native functionality may be portable, but the custom Android AccessibilityService-based app-blocking implementation is Android-specific.
 
 ---
 
-# 17. Final Command Summary
-
-For a brand-new teammate:
-
-```bash
-git clone YOUR_REPO_URL
-cd Studify
-npm install
-```
-
-Create:
-
-```txt
-android/local.properties
-```
-
-with their Android SDK path.
-
-Start an emulator in Android Studio.
-
-Then run:
-
-```bash
-npx expo run:android
-```
-
-After the app opens, enable Accessibility permission for Studify from Android Settings.
-
----
-
-# 18. Quick Reminder
-
-This project now requires a native Android build.
-
-```txt
-Expo Go will not work.
-```
+**Studify — Make your study time count.**
