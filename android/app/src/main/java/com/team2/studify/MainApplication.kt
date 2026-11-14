@@ -1,4 +1,4 @@
-package com.team2.studify
+package com.echogritstudio.studify
 
 import android.app.Application
 import android.content.res.Configuration

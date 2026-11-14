@@ -1,4 +1,4 @@
-package com.team2.studify;
+package com.echogritstudio.studify;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;
