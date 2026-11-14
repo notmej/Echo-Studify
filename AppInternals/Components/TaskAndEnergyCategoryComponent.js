@@ -8,11 +8,16 @@ import {
   ScrollView,
 } from "react-native";
 
-const color1 = "#c49572";
-const color3 = "#876146";
-const color6 = "#f7d9b7";
-const brownColor = "#2a1902";
-const inputBoxColor = "#F3E4C9";
+const theme = {
+  surface: "#19362C",
+  surfaceRaised: "#224237",
+  modalSurface: "#102820",
+  emerald: "#28765A",
+  ivory: "#F3EFE2",
+  muted: "#B6C8BE",
+  gold: "#C3A777",
+  border: "#355247",
+};
 
 export default function TaskCategoryComponent({
   label,
@@ -46,8 +51,20 @@ export default function TaskCategoryComponent({
       <TouchableOpacity
         style={styles.dropdownButton}
         onPress={() => setDropdownVisible(true)}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${showValue(selectedValue)}`}
       >
-        <Text style={styles.dropdownButtonText}>{showValue(selectedValue)}</Text>
+        <Text
+          style={[
+            styles.dropdownButtonText,
+            !selectedValue && styles.placeholderText,
+          ]}
+          numberOfLines={1}
+        >
+          {showValue(selectedValue)}
+        </Text>
+        <Text style={styles.chevron}>⌄</Text>
       </TouchableOpacity>
 
       <Modal
@@ -58,25 +75,55 @@ export default function TaskCategoryComponent({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.dropdownBox}>
-            <Text style={styles.dropdownTitle}>{label}</Text>
+            <View style={styles.modalHeader}>
+              <View style={styles.headerAccent} />
+              <Text style={styles.dropdownTitle}>{label}</Text>
+              <Text style={styles.dropdownSubtitle}>Select an option</Text>
+            </View>
 
-            <ScrollView style={styles.dropdownScroll}>
-              {optionsToShow.map((option) => (
-                <TouchableOpacity
-                  key={option || "empty-option"}
-                  style={styles.dropdownOption}
-                  onPress={() => selectValue(option)}
-                >
-                  <Text style={styles.dropdownOptionText}>
-                    {option || "None"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            <ScrollView
+              style={styles.dropdownScroll}
+              showsVerticalScrollIndicator={false}
+            >
+              {optionsToShow.map((option) => {
+                const selected = (selectedValue || "") === option;
+                return (
+                  <TouchableOpacity
+                    key={option || "empty-option"}
+                    style={[
+                      styles.dropdownOption,
+                      selected && styles.selectedOption,
+                    ]}
+                    onPress={() => selectValue(option)}
+                    activeOpacity={0.75}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownOptionText,
+                        selected && styles.selectedOptionText,
+                      ]}
+                    >
+                      {option || "None"}
+                    </Text>
+                    <View
+                      style={[
+                        styles.radioOutline,
+                        selected && styles.radioSelected,
+                      ]}
+                    >
+                      {selected && <View style={styles.radioDot} />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setDropdownVisible(false)}
+              activeOpacity={0.8}
             >
               <Text style={styles.closeButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -89,83 +136,138 @@ export default function TaskCategoryComponent({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
-
   label: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "700",
-    color: brownColor,
-    marginBottom: 5,
+    color: theme.ivory,
+    marginBottom: 8,
+    letterSpacing: 0.2,
   },
-
   dropdownButton: {
-    backgroundColor: inputBoxColor,
-    borderRadius: 10,
+    backgroundColor: theme.surface,
+    borderRadius: 13,
     borderWidth: 1,
-    borderColor: brownColor,
-    padding: 12,
+    borderColor: theme.border,
+    paddingVertical: 14,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-
   dropdownButtonText: {
-    color: brownColor,
-    fontWeight: "700",
+    color: theme.ivory,
+    fontWeight: "600",
+    fontSize: 15,
+    flex: 1,
   },
-
+  placeholderText: {
+    color: theme.muted,
+    fontWeight: "500",
+  },
+  chevron: {
+    color: theme.gold,
+    fontSize: 25,
+    lineHeight: 24,
+    marginLeft: 12,
+    marginTop: -5,
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    backgroundColor: "rgba(2, 12, 9, 0.78)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 25,
+    padding: 24,
   },
-
   dropdownBox: {
     width: "100%",
-    maxHeight: "70%",
-    backgroundColor: inputBoxColor,
-    borderRadius: 18,
-    padding: 15,
+    maxHeight: "75%",
+    backgroundColor: theme.modalSurface,
+    borderRadius: 22,
+    padding: 18,
     borderWidth: 1,
-    borderColor: brownColor,
+    borderColor: theme.border,
   },
-
+  modalHeader: {
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  headerAccent: {
+    width: 32,
+    height: 3,
+    borderRadius: 3,
+    backgroundColor: theme.gold,
+    marginBottom: 15,
+  },
   dropdownTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: brownColor,
+    fontSize: 20,
+    fontWeight: "700",
+    color: theme.ivory,
     textAlign: "center",
-    marginBottom: 10,
   },
-
+  dropdownSubtitle: {
+    color: theme.muted,
+    fontSize: 12,
+    marginTop: 5,
+  },
   dropdownScroll: {
-    maxHeight: 260,
+    maxHeight: 285,
   },
-
   dropdownOption: {
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: color1,
+    paddingHorizontal: 14,
+    marginBottom: 7,
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
   },
-
-  dropdownOptionText: {
-    fontSize: 18,
-    color: brownColor,
-    fontWeight: "700",
+  selectedOption: {
+    backgroundColor: theme.surfaceRaised,
+    borderColor: theme.gold,
   },
-
+  dropdownOptionText: {
+    fontSize: 15,
+    color: theme.muted,
+    fontWeight: "600",
+    flex: 1,
+  },
+  selectedOptionText: {
+    color: theme.ivory,
+  },
+  radioOutline: {
+    height: 18,
+    width: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: theme.muted,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 12,
+  },
+  radioSelected: {
+    borderColor: theme.gold,
+  },
+  radioDot: {
+    height: 8,
+    width: 8,
+    borderRadius: 4,
+    backgroundColor: theme.gold,
+  },
   closeButton: {
-    backgroundColor: color3,
-    padding: 13,
-    borderRadius: 10,
+    backgroundColor: theme.emerald,
+    padding: 14,
+    borderRadius: 12,
     alignItems: "center",
     marginTop: 12,
   },
-
   closeButtonText: {
-    color: color6,
-    fontWeight: "bold",
-    fontSize: 16,
+    color: theme.ivory,
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
