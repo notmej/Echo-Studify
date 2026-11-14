@@ -1,4 +1,4 @@
-package 
+package com.echogritstudio.studify
 
 import android.os.Build
 import android.os.Bundle
