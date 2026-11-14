@@ -1,4 +1,4 @@
-package com.team2.studify;
+package com.echogritstudio.studify;
 
 import android.accessibilityservice.AccessibilityService;
 import android.content.Intent;

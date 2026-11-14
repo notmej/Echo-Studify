@@ -1,4 +1,4 @@
-package com.team2.studify
+package 
 
 import android.os.Build
 import android.os.Bundle

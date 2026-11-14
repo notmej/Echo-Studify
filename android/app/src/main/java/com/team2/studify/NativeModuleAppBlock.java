@@ -1,4 +1,4 @@
-package com.team2.studify;
+package com.echogritstudio.studify;
 
 import android.content.Context;
 import android.content.Intent;
