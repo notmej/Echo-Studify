@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 
 import {
@@ -23,15 +22,14 @@ import ViewHomePage from "./AppInternals/Views/ViewHomePage";
 import ViewAppBlock from "./AppInternals/Views/ViewAppBlock";
 import ViewToDoDashboard from "./AppInternals/Views/ViewToDoDashboard";
 import ViewStatisticsDashboard from "./AppInternals/Views/ViewStatisticsDashboard";
+import ViewAboutStudify from "./AppInternals/Views/ViewAboutStudify";
 
 const Stack = createNativeStackNavigator();
 
 // Keep disclosure acknowledgement separate from consent.
-const DISCLOSURE_SEEN_KEY =
-  "studify_accessibility_disclosure_seen_v2";
+const DISCLOSURE_SEEN_KEY = "studify_accessibility_disclosure_seen_v2";
 
-const ACCESSIBILITY_CONSENT_KEY =
-  "studify_accessibility_consent_v2";
+const ACCESSIBILITY_CONSENT_KEY = "studify_accessibility_consent_v2";
 
 const theme = {
   background: "#091B15",
@@ -45,11 +43,9 @@ const theme = {
 };
 
 export default function App() {
-  const [showPermissionIntro, setShowPermissionIntro] =
-    useState(false);
+  const [showPermissionIntro, setShowPermissionIntro] = useState(false);
 
-  const [isProcessingConsent, setIsProcessingConsent] =
-    useState(false);
+  const [isProcessingConsent, setIsProcessingConsent] = useState(false);
 
   // Allow App Blocking to reopen the same consent disclosure.
   function requestAccessibilityConsent() {
@@ -62,18 +58,13 @@ export default function App() {
 
     async function checkFirstLaunch() {
       try {
-        const seen = await AsyncStorage.getItem(
-          DISCLOSURE_SEEN_KEY
-        );
+        const seen = await AsyncStorage.getItem(DISCLOSURE_SEEN_KEY);
 
         if (mounted && seen !== "true") {
           setShowPermissionIntro(true);
         }
       } catch (error) {
-        console.warn(
-          "Failed to check accessibility disclosure:",
-          error
-        );
+        console.warn("Failed to check accessibility disclosure:", error);
 
         // Never assume consent when storage fails.
         if (mounted) {
@@ -94,17 +85,11 @@ export default function App() {
     if (isProcessingConsent) return;
 
     try {
-      await AsyncStorage.setItem(
-        DISCLOSURE_SEEN_KEY,
-        "true"
-      );
+      await AsyncStorage.setItem(DISCLOSURE_SEEN_KEY, "true");
 
       setShowPermissionIntro(false);
     } catch (error) {
-      console.warn(
-        "Could not save disclosure acknowledgement:",
-        error
-      );
+      console.warn("Could not save disclosure acknowledgement:", error);
 
       // Allow normal app usage even if the user declines.
       setShowPermissionIntro(false);
@@ -116,19 +101,17 @@ export default function App() {
     if (Platform.OS !== "android") {
       Alert.alert(
         "Android Only",
-        "This app-blocking feature requires Android."
+        "This app-blocking feature requires Android.",
       );
       return;
     }
 
     try {
-      await Linking.sendIntent(
-        "android.settings.ACCESSIBILITY_SETTINGS"
-      );
+      await Linking.sendIntent("android.settings.ACCESSIBILITY_SETTINGS");
     } catch (error) {
       Alert.alert(
         "Unable to Open Settings",
-        "Please open Android Settings > Accessibility and enable the Studify service manually."
+        "Please open Android Settings > Accessibility and enable the Studify service manually.",
       );
     }
   }
@@ -140,15 +123,9 @@ export default function App() {
     setIsProcessingConsent(true);
 
     try {
-      await AsyncStorage.setItem(
-        ACCESSIBILITY_CONSENT_KEY,
-        "true"
-      );
+      await AsyncStorage.setItem(ACCESSIBILITY_CONSENT_KEY, "true");
 
-      await AsyncStorage.setItem(
-        DISCLOSURE_SEEN_KEY,
-        "true"
-      );
+      await AsyncStorage.setItem(DISCLOSURE_SEEN_KEY, "true");
 
       setShowPermissionIntro(false);
 
@@ -156,14 +133,11 @@ export default function App() {
       // Accessibility access manually.
       await openAccessibilitySettings();
     } catch (error) {
-      console.warn(
-        "Failed to record accessibility consent:",
-        error
-      );
+      console.warn("Failed to record accessibility consent:", error);
 
       Alert.alert(
         "Unable to Save Your Choice",
-        "Your consent could not be saved. Please try again."
+        "Your consent could not be saved. Please try again.",
       );
     } finally {
       setIsProcessingConsent(false);
@@ -172,10 +146,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={theme.background}
-      />
+      <StatusBar barStyle="light-content" backgroundColor={theme.background} />
 
       {/* MAIN NAVIGATION */}
       <Stack.Navigator
@@ -183,32 +154,23 @@ export default function App() {
           headerShown: false,
         }}
       >
-        <Stack.Screen
-          name="Home"
-          component={ViewHomePage}
-        />
+        <Stack.Screen name="Home" component={ViewHomePage} />
 
         {/* Pass the disclosure callback to App Blocking. */}
         <Stack.Screen name="AppBlock">
           {(props) => (
             <ViewAppBlock
               {...props}
-              onRequestAccessibilityConsent={
-                requestAccessibilityConsent
-              }
+              onRequestAccessibilityConsent={requestAccessibilityConsent}
             />
           )}
         </Stack.Screen>
 
-        <Stack.Screen
-          name="ToDo"
-          component={ViewToDoDashboard}
-        />
+        <Stack.Screen name="ToDo" component={ViewToDoDashboard} />
 
-        <Stack.Screen
-          name="Stats"
-          component={ViewStatisticsDashboard}
-        />
+        <Stack.Screen name="Stats" component={ViewStatisticsDashboard} />
+
+        <Stack.Screen name="About" component={ViewAboutStudify} />
       </Stack.Navigator>
 
       {/* ACCESSIBILITY DISCLOSURE */}
@@ -223,9 +185,7 @@ export default function App() {
           <View style={styles.permissionCard}>
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={
-                styles.modalScrollContent
-              }
+              contentContainerStyle={styles.modalScrollContent}
               keyboardShouldPersistTaps="handled"
             >
               {/* TOP HEADER */}
@@ -234,120 +194,92 @@ export default function App() {
                   STUDIFY · PRIVACY & PERMISSIONS
                 </Text>
 
-                <Text style={styles.stepIndicator}>
-                  01 / 01
-                </Text>
+                <Text style={styles.stepIndicator}>01 / 01</Text>
               </View>
 
               {/* ICON */}
               <View style={styles.iconContainer}>
-                <Text style={styles.permissionIcon}>
-                  ✦
-                </Text>
+                <Text style={styles.permissionIcon}>✦</Text>
               </View>
 
               {/* INTRODUCTION */}
-              <Text style={styles.title}>
-                Focus with confidence.
-              </Text>
+              <Text style={styles.title}>Focus with confidence.</Text>
 
               <Text style={styles.description}>
-                Studify offers optional app blocking to
-                help you stay focused during study
-                sessions.
+                Studify offers optional app blocking to help you stay focused
+                during study sessions.
               </Text>
 
               <View style={styles.divider} />
 
               {/* ACCESSIBILITY DISCLOSURE */}
-              <Text style={styles.sectionTitle}>
-                Accessibility access
-              </Text>
+              <Text style={styles.sectionTitle}>Accessibility access</Text>
 
               <Text style={styles.description}>
-                Studify uses Android's
-                AccessibilityService API to support its
+                Studify uses Android's AccessibilityService API to support its
                 optional app-blocking feature.
               </Text>
 
               <Text style={styles.description}>
-                When enabled, Studify detects which
-                application is currently open, including
-                its application identifier (package name).
+                When enabled, Studify detects which application is currently
+                open, including its application identifier (package name).
               </Text>
 
               <Text style={styles.description}>
-                Studify compares the currently open app
-                against the apps you selected for
-                blocking. During a focus session, opening
-                a blocked app may cause Studify to
-                redirect you away from it.
+                Studify compares the currently open app against the apps you
+                selected for blocking. During a focus session, opening a blocked
+                app may cause Studify to redirect you away from it.
               </Text>
 
               {/* SENSITIVE ACCESS EXPLANATION */}
               <View style={styles.noticeBox}>
                 <View style={styles.noticeHeader}>
-                  <Text style={styles.noticeIcon}>
-                    ◇
-                  </Text>
+                  <Text style={styles.noticeIcon}>◇</Text>
 
-                  <Text style={styles.noticeTitle}>
-                    Sensitive permission
-                  </Text>
+                  <Text style={styles.noticeTitle}>Sensitive permission</Text>
                 </View>
 
                 <Text style={styles.noticeDescription}>
-                  Android Accessibility access is a
-                  sensitive permission that can allow a
-                  service to observe information about
-                  other apps and their interfaces.
+                  Android Accessibility access is a sensitive permission that
+                  can allow a service to observe information about other apps
+                  and their interfaces.
                 </Text>
 
                 <Text style={styles.noticeDescription}>
-                  Studify requests this access
-                  specifically to provide its
+                  Studify requests this access specifically to provide its
                   app-blocking functionality.
                 </Text>
               </View>
 
               {/* USER CHOICE */}
-              <Text style={styles.sectionTitle}>
-                Your choice
+              <Text style={styles.sectionTitle}>Your choice</Text>
+
+              <Text style={styles.description}>
+                App blocking is optional. You can continue using Studify's other
+                features without enabling Accessibility access.
               </Text>
 
               <Text style={styles.description}>
-                App blocking is optional. You can
-                continue using Studify's other features
-                without enabling Accessibility access.
-              </Text>
-
-              <Text style={styles.description}>
-                You can disable the service at any time
-                through Android Settings.
+                You can disable the service at any time through Android
+                Settings.
               </Text>
 
               {/* CONSENT EXPLANATION */}
               <View style={styles.consentBox}>
                 <View style={styles.consentHeader}>
-                  <Text style={styles.consentIcon}>
-                    ✓
-                  </Text>
+                  <Text style={styles.consentIcon}>✓</Text>
 
-                  <Text style={styles.consentTitle}>
-                    Your consent matters
-                  </Text>
+                  <Text style={styles.consentTitle}>Your consent matters</Text>
                 </View>
 
                 <Text style={styles.consentDescription}>
-                  By selecting "I Agree & Continue",
-                  you consent to the described use of
-                  Accessibility access.
+                  By selecting "I Agree & Continue", you consent to the
+                  described use of Accessibility access.
                 </Text>
 
                 <Text style={styles.consentDescription}>
-                  Android Settings will open so you can
-                  manually enable the service. Nothing
-                  is enabled automatically.
+                  Android Settings will open so you can manually enable the
+                  service. Nothing is enabled automatically.
                 </Text>
               </View>
 
@@ -355,8 +287,7 @@ export default function App() {
               <TouchableOpacity
                 style={[
                   styles.primaryButton,
-                  isProcessingConsent &&
-                    styles.disabledButton,
+                  isProcessingConsent && styles.disabledButton,
                 ]}
                 onPress={handleEnablePermission}
                 disabled={isProcessingConsent}
@@ -364,13 +295,9 @@ export default function App() {
                 accessibilityRole="button"
                 accessibilityLabel="I agree and continue to Accessibility settings"
               >
-                <Text style={styles.primaryButtonText}>
-                  I Agree & Continue
-                </Text>
+                <Text style={styles.primaryButtonText}>I Agree & Continue</Text>
 
-                <Text style={styles.arrowIcon}>
-                  ›
-                </Text>
+                <Text style={styles.arrowIcon}>›</Text>
               </TouchableOpacity>
 
               {/* DECLINE BUTTON */}
@@ -382,14 +309,12 @@ export default function App() {
                 accessibilityRole="button"
                 accessibilityLabel="Not now"
               >
-                <Text style={styles.secondaryButtonText}>
-                  Not Now
-                </Text>
+                <Text style={styles.secondaryButtonText}>Not Now</Text>
               </TouchableOpacity>
 
               <Text style={styles.footerNotice}>
-                Accessibility access can be disabled at
-                any time in Android Settings.
+                Accessibility access can be disabled at any time in Android
+                Settings.
               </Text>
             </ScrollView>
           </View>

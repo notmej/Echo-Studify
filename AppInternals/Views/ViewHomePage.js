@@ -81,8 +81,14 @@ export default function ViewHomePage({ navigation }) {
                 <Text style={styles.headerBadgeText}>FOCUS</Text>
               </View>
 
-              <TouchableOpacity style={styles.userIcon}>
-                <Text style={styles.userIconText}>👤</Text>
+              <TouchableOpacity
+                style={styles.aboutIcon}
+                onPress={() => navigation.navigate("About")}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="About Studify and help"
+              >
+                <Text style={styles.aboutIconText}>?</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -404,19 +410,21 @@ const styles = StyleSheet.create({
     color: theme.muted,
   },
 
-  userIcon: {
+  aboutIcon: {
     width: 41,
     height: 41,
     borderRadius: 21,
     backgroundColor: theme.surfaceRaised,
     borderWidth: 1,
-    borderColor: theme.outline,
+    borderColor: theme.gold,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  userIconText: {
-    fontSize: 18,
+  aboutIconText: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: theme.gold,
   },
 
   // CONTENT
