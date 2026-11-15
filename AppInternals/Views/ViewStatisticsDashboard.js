@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -25,9 +25,13 @@ const theme = {
   muted: "#B6C8BE",
   gold: "#C3A777",
   outline: "#315143",
-  overlay: "rgba(4, 18, 13, 0.55)",
+  overlay: "rgba(4, 18, 13, 0.8)",
   danger: "#E4A9A1",
 };
+
+const periodOrder = ["day", "week", "month", "year"];
+const chartWidth = screenWidth * 0.83;
+const chartGap = 14;
 
 export default function ViewStatisticsDashboard({ navigation }) {
   const {
@@ -39,7 +43,21 @@ export default function ViewStatisticsDashboard({ navigation }) {
     refreshStatistics,
   } = ViewModelStatisticsDashboard();
 
-  const periodOrder = ["day", "week", "month", "year"];
+  const chartScrollRef = useRef(null);
+
+  // Selecting a period also scrolls to the corresponding chart.
+  const selectPeriod = (period) => {
+    changeSelectedPeriod(period);
+
+    const index = periodOrder.indexOf(period);
+
+    if (index !== -1) {
+      chartScrollRef.current?.scrollTo({
+        x: index * (chartWidth + chartGap),
+        animated: true,
+      });
+    }
+  };
 
   if (isLoadingStatistics) {
     return (
@@ -48,7 +66,11 @@ export default function ViewStatisticsDashboard({ navigation }) {
         style={styles.background}
         resizeMode="cover"
       >
-        <StatusBar barStyle="light-content" />
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={theme.background}
+        />
+
         <View style={[styles.centerContent, styles.backgroundOverlay]}>
           <ActivityIndicator size="large" color={theme.gold} />
           <Text style={styles.loadingText}>Loading your statistics...</Text>
@@ -64,10 +86,17 @@ export default function ViewStatisticsDashboard({ navigation }) {
         style={styles.background}
         resizeMode="cover"
       >
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={theme.background}
+        />
+
         <View style={[styles.centerContent, styles.backgroundOverlay]}>
           <View style={styles.errorCard}>
             <Text style={styles.errorEyebrow}>SOMETHING WENT WRONG</Text>
+
             <Text style={styles.errorTitle}>Unable to load statistics</Text>
+
             <Text style={styles.errorText}>{statisticsError}</Text>
 
             <TouchableOpacity
@@ -99,6 +128,7 @@ export default function ViewStatisticsDashboard({ navigation }) {
           <View style={styles.topBar}>
             <View>
               <Text style={styles.brandEyebrow}>YOUR STUDY SPACE</Text>
+
               <Text style={styles.brandText}>
                 Studify<Text style={styles.logoDot}>.</Text>
               </Text>
@@ -107,15 +137,23 @@ export default function ViewStatisticsDashboard({ navigation }) {
             <View style={styles.headerRight}>
               <View style={styles.headerBadge}>
                 <View style={styles.headerBadgeDot} />
+
                 <Text style={styles.headerBadgeText}>PROGRESS</Text>
               </View>
 
-              <View style={styles.userIcon}>
-                <Text style={styles.userIconText}>👤</Text>
-              </View>
+              <TouchableOpacity
+                style={styles.aboutIcon}
+                onPress={() => navigation.navigate("About")}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="About Studify and help"
+              >
+                <Text style={styles.aboutIconText}>?</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
+          {/* MAIN CONTENT */}
           <ScrollView
             style={styles.content}
             contentContainerStyle={styles.contentScroll}
@@ -124,7 +162,9 @@ export default function ViewStatisticsDashboard({ navigation }) {
             {/* PAGE INTRO */}
             <View style={styles.introSection}>
               <Text style={styles.pageEyebrow}>YOUR PROGRESS</Text>
+
               <Text style={styles.pageTitle}>The bigger picture.</Text>
+
               <Text style={styles.pageSubtitle}>
                 Every focused minute adds up.
               </Text>
@@ -134,8 +174,10 @@ export default function ViewStatisticsDashboard({ navigation }) {
             <View style={styles.sectionHeader}>
               <View>
                 <Text style={styles.sectionEyebrow}>OVERVIEW</Text>
+
                 <Text style={styles.sectionTitle}>At a glance</Text>
               </View>
+
               <View style={styles.sectionDecoration} />
             </View>
 
@@ -172,6 +214,7 @@ export default function ViewStatisticsDashboard({ navigation }) {
             <View style={styles.sectionHeader}>
               <View>
                 <Text style={styles.sectionEyebrow}>TIMEFRAME</Text>
+
                 <Text style={styles.sectionTitle}>Explore your focus</Text>
               </View>
             </View>
@@ -187,7 +230,7 @@ export default function ViewStatisticsDashboard({ navigation }) {
                       styles.periodButton,
                       active && styles.periodButtonSelected,
                     ]}
-                    onPress={() => changeSelectedPeriod(period)}
+                    onPress={() => selectPeriod(period)}
                     activeOpacity={0.8}
                   >
                     <Text
@@ -207,6 +250,7 @@ export default function ViewStatisticsDashboard({ navigation }) {
             <View style={styles.sectionHeader}>
               <View>
                 <Text style={styles.sectionEyebrow}>STUDY ANALYTICS</Text>
+
                 <Text style={styles.sectionTitle}>Study time</Text>
               </View>
             </View>
@@ -216,19 +260,21 @@ export default function ViewStatisticsDashboard({ navigation }) {
             </Text>
 
             <ScrollView
+              ref={chartScrollRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.chartScrollContent}
             >
               {periodOrder.map((period) => {
                 const periodData = dashboardData?.periods?.[period];
+
                 const active = selectedPeriod === period;
 
                 return (
                   <TouchableOpacity
-                    activeOpacity={0.9}
                     key={period}
-                    onPress={() => changeSelectedPeriod(period)}
+                    activeOpacity={0.9}
+                    onPress={() => selectPeriod(period)}
                     style={[
                       styles.chartCard,
                       active && styles.chartCardSelected,
@@ -269,10 +315,12 @@ export default function ViewStatisticsDashboard({ navigation }) {
               <View style={styles.detailsHeader}>
                 <View>
                   <Text style={styles.sectionEyebrow}>PERIOD BREAKDOWN</Text>
+
                   <Text style={styles.detailsTitle}>
                     {selectedPeriodData?.title} Summary
                   </Text>
                 </View>
+
                 <Text style={styles.detailsIcon}>✦</Text>
               </View>
 
@@ -280,6 +328,7 @@ export default function ViewStatisticsDashboard({ navigation }) {
 
               <View style={styles.detailsRow}>
                 <Text style={styles.detailsLabel}>Study time</Text>
+
                 <Text style={styles.detailsValue}>
                   {selectedPeriodData?.periodStudyHoursLabel || "0h"}
                 </Text>
@@ -287,6 +336,7 @@ export default function ViewStatisticsDashboard({ navigation }) {
 
               <View style={styles.detailsRow}>
                 <Text style={styles.detailsLabel}>Sessions completed</Text>
+
                 <Text style={styles.detailsValue}>
                   {selectedPeriodData?.periodSessionCount || 0}
                 </Text>
@@ -314,7 +364,9 @@ export default function ViewStatisticsDashboard({ navigation }) {
 
             <TouchableOpacity style={styles.navButton}>
               <Text style={[styles.navIcon, styles.navIconActive]}>▥</Text>
+
               <Text style={[styles.navText, styles.navTextActive]}>Stats</Text>
+
               <View style={styles.activeIndicator} />
             </TouchableOpacity>
 
@@ -332,11 +384,13 @@ export default function ViewStatisticsDashboard({ navigation }) {
   );
 }
 
+// SUMMARY CARD
 function SummaryCard({ title, value, caption, icon, featured = false }) {
   return (
     <View style={[styles.summaryCard, featured && styles.summaryCardFeatured]}>
       <View style={styles.summaryCardTop}>
         <Text style={styles.summaryIcon}>{icon}</Text>
+
         <View style={styles.summaryAccentDot} />
       </View>
 
@@ -351,6 +405,7 @@ function SummaryCard({ title, value, caption, icon, featured = false }) {
   );
 }
 
+// BAR CHART
 function BarChart({ buckets }) {
   return (
     <View style={styles.chartArea}>
@@ -396,6 +451,7 @@ function getPeriodButtonLabel(period) {
 }
 
 const styles = StyleSheet.create({
+  // BACKGROUND
   background: {
     flex: 1,
     backgroundColor: theme.background,
@@ -471,19 +527,21 @@ const styles = StyleSheet.create({
     color: theme.muted,
   },
 
-  userIcon: {
+  aboutIcon: {
     width: 41,
     height: 41,
     borderRadius: 21,
     backgroundColor: theme.surfaceRaised,
     borderWidth: 1,
-    borderColor: theme.outline,
+    borderColor: theme.gold,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  userIconText: {
-    fontSize: 18,
+  aboutIconText: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: theme.gold,
   },
 
   // CONTENT
@@ -667,11 +725,11 @@ const styles = StyleSheet.create({
   },
 
   chartCard: {
-    width: screenWidth * 0.83,
+    width: chartWidth,
     backgroundColor: theme.surface,
     borderRadius: 22,
     padding: 18,
-    marginRight: 14,
+    marginRight: chartGap,
     borderWidth: 1,
     borderColor: theme.outline,
   },

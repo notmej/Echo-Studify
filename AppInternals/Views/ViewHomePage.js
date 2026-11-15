@@ -62,6 +62,7 @@ export default function ViewHomePage({ navigation }) {
       style={styles.background}
       resizeMode="cover"
     >
+      <View style={styles.overlay} />
       <StatusBar barStyle="light-content" backgroundColor={theme.background} />
 
       <View style={styles.backgroundOverlay}>
@@ -336,6 +337,10 @@ export default function ViewHomePage({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
   background: {
     flex: 1,
   },

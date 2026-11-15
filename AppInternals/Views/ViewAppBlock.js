@@ -89,6 +89,7 @@ export default function ViewAppBlock({
       style={styles.background}
       resizeMode="cover"
     >
+      <View style={styles.overlay} />
       <StatusBar barStyle="light-content" backgroundColor={theme.background} />
 
       <View style={styles.backgroundOverlay}>
@@ -297,6 +298,10 @@ export default function ViewAppBlock({
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
   background: {
     flex: 1,
     backgroundColor: theme.background,

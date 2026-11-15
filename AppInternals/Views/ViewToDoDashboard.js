@@ -142,6 +142,7 @@ export default function ViewToDoDashboard({ navigation }) {
       style={styles.background}
       resizeMode="cover"
     >
+      <View style={styles.overlay} />
       <StatusBar barStyle="light-content" backgroundColor={theme.background} />
 
       <View style={styles.backgroundOverlay}>
@@ -161,9 +162,15 @@ export default function ViewToDoDashboard({ navigation }) {
                 <Text style={styles.headerBadgeText}>TASKS</Text>
               </View>
 
-              <View style={styles.userIcon}>
-                <Text style={styles.userIconText}>👤</Text>
-              </View>
+              <TouchableOpacity
+                style={styles.aboutIcon}
+                onPress={() => navigation.navigate("About")}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="About Studify and help"
+              >
+                <Text style={styles.aboutIconText}>?</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -407,6 +414,10 @@ export default function ViewToDoDashboard({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
   background: {
     flex: 1,
     backgroundColor: theme.background,
@@ -482,19 +493,21 @@ const styles = StyleSheet.create({
     color: theme.muted,
   },
 
-  userIcon: {
+  aboutIcon: {
     width: 41,
     height: 41,
     borderRadius: 21,
     backgroundColor: theme.surfaceRaised,
     borderWidth: 1,
-    borderColor: theme.outline,
+    borderColor: theme.gold,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  userIconText: {
-    fontSize: 18,
+  aboutIconText: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: theme.gold,
   },
 
   // CONTENT
