@@ -22,7 +22,7 @@ const theme = {
   muted: "#B6C8BE",
   gold: "#C3A777",
   outline: "#315143",
-  overlay: "rgba(4, 18, 13, 0.55)",
+  overlay: "rgba(4, 18, 13, 0.8)",
 };
 
 export default function ViewAboutStudify({ navigation }) {
@@ -65,10 +65,9 @@ export default function ViewAboutStudify({ navigation }) {
       style={styles.background}
       resizeMode="cover"
     >
-      <View style={styles.overlay} />
       <StatusBar barStyle="light-content" backgroundColor={theme.background} />
 
-      <View style={styles.overlay}>
+      <View style={styles.backgroundOverlay}>
         {/* HEADER */}
         <View style={styles.topBar}>
           <TouchableOpacity
@@ -324,16 +323,12 @@ export default function ViewAboutStudify({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
   background: {
     flex: 1,
     backgroundColor: theme.background,
   },
 
-  overlay: {
+  backgroundOverlay: {
     flex: 1,
     backgroundColor: theme.overlay,
   },
