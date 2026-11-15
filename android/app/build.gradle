@@ -97,6 +97,7 @@ android {
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
+    
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -104,10 +105,18 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+
+        release {
+            storeFile file("${System.getProperty('user.home')}/.android/studify-upload-key.jks")
+            storePassword findProperty('STUDIFY_UPLOAD_STORE_PASSWORD') ?: ''
+            keyAlias 'studify-upload'
+            keyPassword findProperty('STUDIFY_UPLOAD_KEY_PASSWORD') ?: ''
+        }
     }
+
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
         release {
             // Caution! In production, you need to generate your own keystore file.
